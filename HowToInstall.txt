@@ -1,0 +1,40 @@
+Requirements:
+------------
+- You need Sat receiver with the Titan software
+- Enough free space on drive (about 195KB are required)
+- iOS device with Enigma2 app (e.g. dreaMote Lite)
+- Titan Web Server must be enabled
+
+Steps:
+------
+
+1. Copy the pre-compiled binary (SH4) to your receiver using FTP
+ftp <receiver.ip>
+cd /var/emu
+bin
+put e2webserv
+2. Please login now on the receiver
+telnet <receiver.ip>
+3. Set executable flag for the program
+chmod +x /var/emu/e2webserv
+4. Prepare the program for auto-start
+vi /var/etc/autostart/usercmd.sh
+and add the line:
+/var/emu/e2webserv -b
+
+When you restart the receiver the program will automatically start and run in background.
+If you don't want to restart the receiver now, please execute the command manually.
+
+5. Check in a browser if the program is responding
+http://<receiver.ip>:8080/web/about
+
+6. Configure your app to use the desired IP address and the port 8080 (you can change the port 
+  by providing the -p <your-desired-port> option for e2webserv.
+
+Assumption:
+----------
+- Titan web server is running on port 80 (start e2webserv with additional option -tp <port>, when this is not true)
+- Titan data port is 22222 (start e2webserv with additional option -tdp <port>, when this is not true)
+- Movies are in /media/hdd/movie
+- Bouquets and channel data are located in /var/etc/titan
+
