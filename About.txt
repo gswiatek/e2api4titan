@@ -1,0 +1,17 @@
+This software allows you to use Enigma2 Apps on your iOS device
+to connect to Sat receiver with Titan.
+
+This software implements only a part of Enigma2 Web-API.
+Each implemented E2 specific HTTP request will be translated to Titan specific call.
+Answers from Titan are translated back to E2. 
+Some E2 requests (e.g. bouquets, device information) are implemented directly.
+
+The implemented web server should be started on the Sat receiver, but you can also
+start it on some server (e.g. Raspberry Pi).
+
+My test environment:
+- Sat receiver: Atemio510 and UFS-910 (currently both with Titan 1.23)
+- iOS device: iPad2
+- iOS apps: 
+	* dreaMote Lite (with BUZZ Player and GoodPlayer used for streaming)
+	* Dreambox Live

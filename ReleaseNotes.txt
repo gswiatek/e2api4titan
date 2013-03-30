@@ -1,0 +1,19 @@
+Version 1.0.0 (31.03.2013)
+-------------
+
+Implemented or partially implemented features:
+- Bouquets with channels
+- Recorded movies (no EPG)
+- EPG (what was possible)
+- About / Device Information
+- Zap on Receiver
+- Streaming of a TV channel
+- Streaming of recorded movie
+- Remote Control (Mute, Menu, Ok, Info, Vol Up, Vol Down, ...) 
+- Power State (Standby, ...)
+
+Known Limitations:
+- Currently only TV is supported (no Radio support)
+- No correct check if zapping is allowed (serviceplayable)
+- Timers are not yet implemented
+- Web Authentication not supported
