@@ -452,9 +452,9 @@ void startAsDaemon() {
 #endif
 }
 
-int main(int argc, const char** argv) {
+int main(int argc, char** argv) {
 
-	if (!Config::parse(argc, argv)) {
+	if (!Config::parse(argc, (const char**) argv)) {
 		return -1;
 	}
 

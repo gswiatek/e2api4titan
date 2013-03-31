@@ -35,6 +35,7 @@ namespace gs {
 	namespace e2 {
 		class LineHandler {
 		public:
+			virtual ~LineHandler() { }
 			virtual void handleLine(const std::vector<char*>& line) = 0;
 		};
 	}
