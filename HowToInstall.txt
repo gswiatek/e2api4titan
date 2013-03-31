@@ -1,7 +1,8 @@
 Requirements:
 ------------
 - You need Sat receiver with the Titan software
-- Enough free space on drive (about 195KB are required)
+- Enough free space on drive (about 200KB are required)
+- Please ensure that port 8001 is not used (check /etc/inted.conf)
 - iOS device with Enigma2 app (e.g. dreaMote Lite)
 - Titan Web Server must be enabled
 
