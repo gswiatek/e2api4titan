@@ -620,13 +620,6 @@ void ServiceReader::handleLine(const vector<char*>& line) {
 
 		string loc(line[2]);
 
-		// TODO: use location direct
-		string::size_type pos = loc.find_last_of('/');
-
-		if (pos != string::npos) {
-			loc = loc.substr(pos + 1);
-		}
-
 		Service s;
 
 		s.bouquet = true;
@@ -639,8 +632,7 @@ void ServiceReader::handleLine(const vector<char*>& line) {
 		m_services.push_back(s);
 		ServiceReader* sr = new ServiceReader(m_channelReader, false);
 
-		string config(Config::getTitanDir());
-		FileHelper::readConfigFile(config + loc, *sr);
+		FileHelper::readConfigFile(loc, *sr);
 
 		m_readers[s.name] = sr;
 	} else {
