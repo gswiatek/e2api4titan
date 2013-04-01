@@ -35,7 +35,7 @@ namespace gs {
 		public:
 			static const int major = 1;
 			static const int minor = 0;
-			static const int build = 3;
+			static const int build = 4;
 		};
 	}
 }

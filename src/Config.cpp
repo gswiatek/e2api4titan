@@ -110,6 +110,21 @@ bool Config::parse(int argc, const char** argv) {
 				return false;
 			}
 			m_titanHost = argv[++pos];
+		} else if (strcmp(argv[pos], "-d") == 0) {
+			if (pos + 1 == argc) {
+				usage(argv[0]);
+				return false;
+			}
+			m_titanDir = argv[++pos];
+#ifndef _WIN32
+			if (m_titanDir[m_titanDir.size() - 1] != '/') {
+				m_titanDir.append("/");
+			}
+#else
+			if (m_titanDir[m_titanDir.size() - 1] != '\\') {
+				m_titanDir.append("\\");
+			}
+#endif
 		} else if (strcmp(argv[pos], "-dp") == 0) {
 			if (pos + 1 == argc) {
 				usage(argv[0]);
@@ -154,5 +169,6 @@ void Config::usage(const char* progName) {
 	cerr << "\t-h <ip>      IP of Titan Receiver (default: 127.0.0.1)" << endl;
 	cerr << "\t-tp <num>    Titan Web Server port (default: 80)" << endl;
 	cerr << "\t-tdp <num>   Titan data port (default: 22222)" << endl;
+	cerr << "\t-d <dir>     Titan settings directory (default: /var/etc/titan/)" << endl;
 	cerr << "\t-n <num>     Number of threads in pool (default: 2)" << endl;
 }

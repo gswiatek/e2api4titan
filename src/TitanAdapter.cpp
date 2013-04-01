@@ -457,7 +457,14 @@ EventList TitanAdapter::getEpgNext(const string& ref) {
 	TitanCurrent current;
 
 	if (getActive(current)) {
-		if (current.eventId > 0) {
+		if (current.nextId > 0) { // when next id is set then get the whole EPG info
+			Event e;
+
+			if (getEpg(ref + "&" + Util::valueOf(current.nextId), e)) {
+				e.id = current.eventId;
+				res.push_back(e);
+			}
+		} else if (current.eventId > 0) { // when current event id is set then get only the short info if available
 			Event e;
 
 			e.title = current.nextDesc;
@@ -496,6 +503,10 @@ bool TitanAdapter::getActive(TitanCurrent& current) {
 				current.nextStart = Util::getTime(values[pos++]);
 				current.nextStop = Util::getTime(values[pos++]);
 				current.nextDesc = values[pos];
+			}
+
+			if (values.size() > 12) {
+				current.nextId = Util::getUInt(values[12]);
 			}
 
 			return true;
@@ -867,4 +878,58 @@ void TitanAdapter::about(ostream& os, const DeviceInfo& info, const Channel& cha
 
 	os << "</e2about>";
 	os << "</e2abouts>";
+}
+
+bool TitanAdapter::setMute(bool on, Volume& vol) {
+	/*string reply;
+
+	string uri = "/queryraw?setmute&";
+	
+	if (on) {
+		uri.append("1");
+	} else {
+		uri.append("0");
+	}
+
+	if (Client::get(Config::getTitanHost(), Config::getTitanPort(), uri, reply)) {
+		vol.muted = (Util::getInt(reply) == 1);
+	}
+
+	if (Client::get(Config::getTitanHost(), Config::getTitanPort(), "/queryraw?getvol&100", reply)) {
+		vol.val = Util::getInt(reply);
+	}*/
+
+	sendRc(113); // TODO: it seams that E2 uses 'flip-flop', so we send the RC and then get volume information
+	getVolume(vol);
+
+	return true; // TODO
+}
+
+bool TitanAdapter::setVolume(int val, Volume& vol) {
+	string reply;
+
+	if (Client::get(Config::getTitanHost(), Config::getTitanPort(), "/queryraw?setvol&" + Util::valueOf(val), reply)) {
+		vol.val = Util::getInt(reply);
+	}
+
+	if (Client::get(Config::getTitanHost(), Config::getTitanPort(), "/queryraw?getmute", reply)) {
+		vol.muted = (Util::getInt(reply) == 1);
+	}
+
+	return true; // TODO
+}
+
+bool TitanAdapter::getVolume(Volume& vol) {
+	string reply;
+
+	
+	if (Client::get(Config::getTitanHost(), Config::getTitanPort(), "/queryraw?getvol&100", reply)) {
+		vol.val = Util::getInt(reply);
+	}
+
+	if (Client::get(Config::getTitanHost(), Config::getTitanPort(), "/queryraw?getmute", reply)) {
+		vol.muted = (Util::getInt(reply) == 1);
+	}
+
+	return true; // TODO
 }

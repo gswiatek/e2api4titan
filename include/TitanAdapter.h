@@ -82,7 +82,7 @@ namespace gs {
 
 		typedef struct titanCurrent {
 		public:
-			titanCurrent(): proc(0), serviceId(0), transponderId(0), serviceType(0), eventId(0), actStart(0), nextStart(0), nextStop(0) {
+			titanCurrent(): proc(0), serviceId(0), transponderId(0), serviceType(0), eventId(0), actStart(0), nextStart(0), nextStop(0), nextId(0) {
 
 			}
 			std::string channelName;
@@ -97,6 +97,7 @@ namespace gs {
 			time_t nextStart;
 			time_t nextStop;
 			std::string nextDesc;
+			unsigned int nextId;
 		} TitanCurrent;
 
 		class TransponderReader: public LineHandler {
@@ -203,6 +204,9 @@ namespace gs {
 			std::string getRcName(int code);
 			bool sendRc(int code);
 			bool deleteMovie(const std::string& ref);
+			bool getVolume(Volume& vol);
+			bool setMute(bool on, Volume& vol);
+			bool setVolume(int val, Volume& vol);
 
 		private:
 			bool getEpg(const std::string& ref, Event& event);

@@ -170,6 +170,13 @@ namespace gs {
 			EventList events;
 		} CurrentService;
 
+		typedef struct volume {
+		public:
+			volume(): val(100), muted(false) {}
+			int val;
+			bool muted;
+		} Volume;
+
 		typedef enum  {PS_TOOGLE_STANDBY, PS_DEEP_STANDBY, PS_REBOOT, PS_RESTART, PS_WAKEUP, PS_STANDBY} PowerState;
 
 		inline std::ostream& operator<<(std::ostream& os, const Reference& ref) {
@@ -349,6 +356,20 @@ namespace gs {
 			os << currentService.events;
 
 			os << "</e2currentserviceinformation>" << std::endl;
+
+			return os;
+		}
+
+		inline std::ostream& operator<<(std::ostream& os, Volume& volume) {
+
+			os << "<e2volume>" << std::endl;
+
+			bool res = true; // TODO
+			os << "<e2result>" << res << "</e2result>" << std::endl;
+			os << "<e2current>" << volume.val << "</e2current>" << std::endl;
+			os << "<e2ismuted>" << (volume.muted ? "true": "false") << "</e2ismuted>" << std::endl;
+
+			os << "</e2volume>" << std::endl;
 
 			return os;
 		}

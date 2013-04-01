@@ -254,7 +254,25 @@ void handle(struct mg_connection* conn, std::string& uri, const string& query) {
 			EventList l; // TODO:
 			os << xml << endl;
 			os << l;
+		} else if (uri == "vol") { // gets or sets volume
+			Volume vol;
+			
+			if (query.find("set=") == 0) {
+				string val = query.substr(4);
 
+				if (val == "mute") {
+					TitanAdapter::getAdapter()->setMute(true, vol);
+				} else if (val.find("set") == 0) {
+					TitanAdapter::getAdapter()->setVolume(Util::getInt(val.substr(3)), vol);
+				} else {
+					TitanAdapter::getAdapter()->setMute(false, vol);
+				}
+			} else {
+				TitanAdapter::getAdapter()->getVolume(vol);
+			}
+			
+			os << xml << endl;
+			os << vol;
 		} else if (uri == "about") {
 			DeviceInfo device;
 			Channel channel;
@@ -288,9 +306,7 @@ void handle(struct mg_connection* conn, std::string& uri, const string& query) {
 
 		return;
 	} else if (uri.find("/1:0:1:") == 0) {
-		uri = "/" + Util::getTitanRef(uri.substr(1));
-
-		uri = Util::urlEncode(uri);
+		uri = "/" +  Util::urlEncode(Util::getTitanRef(uri.substr(1)));
 	
 		ostringstream response;
 		string server = movedTemporarily(conn, response);
