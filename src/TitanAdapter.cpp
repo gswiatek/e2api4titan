@@ -479,7 +479,7 @@ bool TitanAdapter::getActive(TitanCurrent& current) {
 	if (Client::get(Config::getTitanHost(), Config::getTitanPort(), "/queryraw?getaktservice", reply)) {
 		vector<string> values = Util::getTokens(reply);
 
-		if (values.size() == 12) {
+		if (values.size() >= 12) {
 			int pos = 0;
 
 			current.channelName = values[pos++];
