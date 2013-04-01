@@ -305,6 +305,12 @@ EventList TitanAdapter::getEpg(const string& serviceRef) {
 	return res;
 }
 
+bool TitanAdapter::deleteMovie(const string& ref) {
+	string reply;
+
+	// TODO: movie location configurable
+	return Client::get(Config::getTitanHost(), Config::getTitanPort(), "/queryraw?delmoviefile&/media/hdd/movie&1&" + Util::urlEncode(ref, true), reply);
+}
 
 MovieList TitanAdapter::getMovies() {
 	list<string> files;

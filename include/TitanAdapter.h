@@ -202,6 +202,7 @@ namespace gs {
 			MovieList getMovies();
 			std::string getRcName(int code);
 			bool sendRc(int code);
+			bool deleteMovie(const std::string& ref);
 
 		private:
 			bool getEpg(const std::string& ref, Event& event);

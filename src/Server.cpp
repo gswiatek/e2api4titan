@@ -96,18 +96,18 @@ string movedTemporarily(struct mg_connection* conn, ostringstream& response) {
 	response << "Date: " << Util::getHttpDate() << "\r\n";
 
 	if (host) {
-		server = host;
-
-		string::size_type pos = server.find(':');
-
-		if (pos != string::npos) {
-			server = server.substr(0, pos);
-		}
-
 		const string& titanHost = Config::getTitanHost();
 
 		if (titanHost != "127.0.0.1") { // we are not local -> use configured titan host
 			server = titanHost.c_str();
+		} else {
+			server = host;
+
+			string::size_type pos = server.find(':');
+
+			if (pos != string::npos) {
+				server = server.substr(0, pos);
+			}
 		}
 	}
 
@@ -185,6 +185,12 @@ void handle(struct mg_connection* conn, std::string& uri, const string& query) {
 			list<Movie> movies = TitanAdapter::getAdapter()->getMovies();
 			os << xml << endl;
 			os << movies;
+		} else if ((uri == "moviedelete") && query.find("sRef=") == 0) {
+			string ref = Util::getTitanRef(query.substr(5));
+			bool deleted = TitanAdapter::getAdapter()->deleteMovie(ref);
+			os << "<e2simplexmlresult>";
+			os << "<e2state>" << deleted << "</e2state>" << endl;
+			os << "</e2simplexmlresult>";
 		} else if ((uri == "epgservicenow") && query.find("sRef=") == 0) {
 			string serviceRef = Util::getTitanRef(query.substr(5));
 			EventList l = TitanAdapter::getAdapter()->getEpgNow(serviceRef);
@@ -268,11 +274,7 @@ void handle(struct mg_connection* conn, std::string& uri, const string& query) {
 		}
 	} else if ((uri == "/file" || uri == "/file/") && query.find("file=") == 0) {
 		string ref = Util::getTitanRef(query.substr(5));
-
-		char buf[512];
-		buf[0] = 0;
-		Util::urlEncode(ref.c_str(), buf, 512);
-		ref = buf;
+		ref = Util::urlEncode(ref);
 
 		ostringstream response;
 		string server = movedTemporarily(conn, response);
@@ -288,10 +290,7 @@ void handle(struct mg_connection* conn, std::string& uri, const string& query) {
 	} else if (uri.find("/1:0:1:") == 0) {
 		uri = "/" + Util::getTitanRef(uri.substr(1));
 
-		char buf[512];
-		buf[0] = 0;
-		Util::urlEncode(uri.c_str(), buf, 512);
-		uri = buf;
+		uri = Util::urlEncode(uri);
 	
 		ostringstream response;
 		string server = movedTemporarily(conn, response);

@@ -32,7 +32,7 @@
 #include <string>
 #include <vector>
 #include <ctime>
-
+#include <iostream>
 
 namespace gs {
 	namespace e2 {
@@ -59,8 +59,14 @@ namespace gs {
 			/** Converts unsigned int value to string */
 			static std::string valueOf(unsigned int val);
 
-			static void urlEncode(const char* src, char* dst, size_t dst_len);
 			static int urlDecode(const char* src, int src_len, char* dst, int dst_len);
+			/**
+			 * URL encoding
+			 *
+			 * @param data input data to be encoded
+			 * @param mongooseClient the client download uses _vsnprintf so we must double escape the perecent char (%)
+			 */
+			static std::string urlEncode(const std::string& data, bool mongooseClient = false);
 
 		private:
 			Util();

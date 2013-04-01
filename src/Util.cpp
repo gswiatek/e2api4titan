@@ -199,25 +199,29 @@ time_t Util::parseTime(const string& name) {
 	return res;
 }
 
-// TODO: copied from mongoose
-void Util::urlEncode(const char *src, char *dst, size_t dst_len) {
-  static const char *dont_escape = "._/-$;~()";
-  static const char *hex = "0123456789abcdef";
-  const char *end = dst + dst_len - 1;
+std::string Util::urlEncode(const std::string& data, bool mongooseClient) {
+	static const char *hex = "0123456789abcdef";
 
-  for (; *src != '\0' && dst < end; src++, dst++) {
-    if (isalnum(*(const unsigned char *) src) ||
-        strchr(dont_escape, * (const unsigned char *) src) != NULL) {
-      *dst = *src;
-    } else if (dst + 2 < end) {
-      dst[0] = '%';
-      dst[1] = hex[(* (const unsigned char *) src) >> 4];
-      dst[2] = hex[(* (const unsigned char *) src) & 0xf];
-      dst += 2;
-    }
-  }
+	string::size_type len = data.size();
 
-  *dst = '\0';
+	string res;
+	res.reserve(len * 2);
+
+	char c;
+
+	for (string::size_type i = 0; i < len; i++) {
+		c = data[i];
+
+		if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '-' || c == '_' || c == '.' || c == '~') {
+			res.append(1, c);
+		} else {
+			res.append(mongooseClient ? 2: 1, '%');
+			res.append(1, hex[(((const unsigned char) c) >> 4)]);
+			res.append(1, hex[((const unsigned char) c) & 0x0f]);
+		}
+	}
+
+	return res;
 }
 
 // TODO: copied from mongoose
