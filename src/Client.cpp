@@ -27,6 +27,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Client.h"
+#include "Version.h"
 #include "mongoose.h"
 
 #include <iostream>
@@ -40,14 +41,15 @@ bool Client::get(const string& host, int port, const string& uri, string& data) 
 	//cout << "get: " << host << ":" << port  << uri << endl;
 
 	static const size_t bufSize = 4096;
+	static const string nl = "\r\n";
 
 	ostringstream os;
 
 	os << "GET " << uri << " HTTP/1.1\r\n";
-	os << "Host: " << host << "\r\n";
+	os << "Host: " << host << nl;
 	os << "Connection: close\r\n";
-	os << "User-Agent: GsE2TitanBridge/1.0\r\n";
-	os << "\r\n";
+	os << "User-Agent: " << Version::getVersion() << nl;
+	os << nl;
 
 
 	char buf[bufSize];

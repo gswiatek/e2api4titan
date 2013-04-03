@@ -264,3 +264,16 @@ string Util::valueOf(unsigned int val) {
 
 	return os.str();
 }
+
+void Util::ltrim(string& str) {
+	str.erase(0, str.find_first_not_of(" \n\r\t"));
+}
+
+void Util::rtrim(string& str) {
+	str.erase(str.find_last_not_of(" \n\r\t") + 1);
+}
+
+void Util::trim(string& str) {
+	str.erase(0, str.find_first_not_of(" \n\r\t"));
+	str.erase(str.find_last_not_of(" \n\r\t") + 1);
+}

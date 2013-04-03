@@ -50,38 +50,6 @@
 using namespace std;
 using namespace gs::e2;
 
-
-/*void writeChunk(struct mg_connection*conn, const string& data) {
-	int len = data.length();
-	const char* buf = data.c_str();
-
-	int pos = 0;
-	int chunkSize = 512;
-
-	while (pos + chunkSize < len) {
-		mg_write(conn, "ff\r\n", 4);
-		mg_write(conn, buf + pos, chunkSize);
-		mg_write(conn, "\r\n", 2);
-		pos += chunkSize;
-	}
-	
-
-	if (pos < len) {
-		char tmp[20];
-
-#ifdef _WIN32
-		_snprintf_s(tmp, 20, "%x\r\n", (len - pos));
-#else
-		snprintf(tmp, 20, "%x\r\n", (len - pos));
-#endif
-		mg_write(conn, tmp, strlen(tmp));
-		mg_write(conn, buf + pos, (len - pos));
-		mg_write(conn, "\r\n", 2);
-	}
-
-	mg_write(conn, "0\r\n\r\n\r\n", 7);
-}*/
-
 string movedTemporarily(struct mg_connection* conn, ostringstream& response) {
 	string server;
 
@@ -116,6 +84,7 @@ string movedTemporarily(struct mg_connection* conn, ostringstream& response) {
 
 void handle(struct mg_connection* conn, std::string& uri, const string& query) {
 	static const string xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
+	static const string nl = "\r\n";
 
 	// TODO: log
 	//cout << "handle: uri=" << uri << ", query=" << query << endl;
@@ -298,7 +267,7 @@ void handle(struct mg_connection* conn, std::string& uri, const string& query) {
 		string server = movedTemporarily(conn, response);
 
 		if (!server.empty()) {
-			response << "Location: http://" <<  server << ":" <<  Config::getTitanDataPort() << "/0%2c0%2c/media/hdd/movie/" << ref << "\r\n\r\n";
+			response << "Location: http://" <<  server << ":" <<  Config::getTitanDataPort() << "/0%2c0%2c/media/hdd/movie/" << ref << nl << nl;
 		}
 
 		string resp = response.str();
@@ -312,7 +281,7 @@ void handle(struct mg_connection* conn, std::string& uri, const string& query) {
 		string server = movedTemporarily(conn, response);
 		
 		if (!server.empty()) {
-			response << "Location: http://" << server << ":" << Config::getTitanDataPort() << uri << "\r\n\r\n";
+			response << "Location: http://" << server << ":" << Config::getTitanDataPort() << uri << nl << nl;
 		}
 
 		string resp = response.str();
@@ -338,26 +307,24 @@ void handle(struct mg_connection* conn, std::string& uri, const string& query) {
 	int len = data.length();
 
 	if (notFound) {
-		response << "Date: " << Util::getHttpDate() << "\r\n";
+		response << "Date: " << Util::getHttpDate() << nl;
 		response << "Connection: close\r\n";
-		response << "Server: GsE2TitanBridge/1.0\r\n";
+		response << "Server: " << Version::getVersion() << nl;
 	} else {
 		//response << "Transfer-Encoding: chunked\r\n";
-		response << "Date: " << Util::getHttpDate() << "\r\n";
+		response << "Date: " << Util::getHttpDate() << nl;
 		response << "Content-Type: text/xml; charset=UTF-8\r\n";
-		response << "Content-Length: " << len << "\r\n";
-		response << "Server: GsE2TitanBridge/1.0\r\n";
+		response << "Content-Length: " << len << nl;
+		response << "Server: " << Version::getVersion() << nl;
 	}
 
-	response << "\r\n";
+	response << nl;
 
 	string headers = response.str();
 
 	mg_write(conn, headers.c_str(), headers.length());
 
 	if (!notFound) {
-		
-//		writeChunk(conn, data);
 		mg_write(conn, data.c_str(), data.length());
 	}
 }
@@ -380,59 +347,6 @@ int requestHandler(struct mg_connection* conn) {
 
 	return 1;
 }
-
-
-/*int proxyRequestHandler(struct mg_connection* conn) {
-	const struct mg_request_info *request = mg_get_request_info(conn);
-
-	string uri = request->uri;
-	// TODO: log
-	// cout << "proxy: " << uri << endl;
-
-	if (uri.find("/1:0:1:") == 0) {
-		uri = "/" + Util::getTitanRef(uri.substr(1));
-	}
-
-	
-	char buf[512];
-	buf[0] = 0;
-	Util::urlEncode(uri.c_str(), buf, 512);
-	uri = buf;
-	
-	ostringstream response;
-	const char* host = mg_get_header(conn, "Host");
-
-	if (host) {
-		response << "HTTP/1.1 302 Moved Temporarily\r\n";
-	} else {
-		response << "HTTP/1.1 400 Bad Request\r\n";
-	}
-
-	response << "Date: " << Util::getHttpDate() << "\r\n";
-
-	if (host) {
-		string server(host);
-
-		string::size_type pos = server.find(':');
-
-		if (pos != string::npos) {
-			server = server.substr(0, pos);
-		}
-
-		const string& titanHost = Config::getTitanHost();
-
-		if (titanHost != "127.0.0.1") { // we are not local -> use configured titan host
-			server = titanHost.c_str();
-		}
-
-		response << "Location: http://" << server << ":" << Config::getTitanDataPort() << uri << "\r\n\r\n";
-	}
-
-	string resp = response.str();
-	mg_write(conn, resp.c_str(), resp.length());
-
-	return 1;
-}*/
 
 void startAsDaemon() {
 #ifndef _WIN32
@@ -491,21 +405,8 @@ int main(int argc, char** argv) {
 	callbacks.begin_request = requestHandler;
 	ctx = mg_start(&callbacks, 0, options);
 
-
-	/*struct mg_context *proxyCtx = 0;
-	struct mg_callbacks proxyCallbacks;
-	string dataPort = Util::valueOf(Config::getDataPort());
-	const char *proxyOptions[] = {"listening_ports", dataPort.c_str(), "num_threads", threads.c_str(), 0};
-
-
-	memset(&proxyCallbacks, 0, sizeof(proxyCallbacks));
-
-	proxyCallbacks.begin_request = proxyRequestHandler;
-
-	proxyCtx = mg_start(&proxyCallbacks, 0, proxyOptions);*/
-
 	if (!ctx) {
-		cerr << "Server could not be started" << endl;
+		cerr << "Server could not be started (please check '/etc/inetd.conf' if port 8001 is not used)" << endl;
 		return -1;
 	}
 
@@ -517,10 +418,6 @@ int main(int argc, char** argv) {
 		pause();
 #endif
 	}
-
-	/*if (proxyCtx) {
-		mg_stop(proxyCtx);
-	}*/
 
 	return 0;
 }

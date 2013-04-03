@@ -67,7 +67,12 @@ namespace gs {
 			 * @param mongooseClient the client download uses _vsnprintf so we must double escape the perecent char (%)
 			 */
 			static std::string urlEncode(const std::string& data, bool mongooseClient = false);
-
+			/** Removes all trailing whitespace of the input string */
+			static void rtrim(std::string& str);
+			/** Removes all leading whitespaces of the input string */
+			static void ltrim(std::string& str);
+			/** Removes all trailing and leading whitespace of the input string */
+			static void trim(std::string& str);
 		private:
 			Util();
 			~Util();

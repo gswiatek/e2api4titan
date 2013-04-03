@@ -619,6 +619,13 @@ void ServiceReader::handleLine(const vector<char*>& line) {
 		}
 
 		string loc(line[2]);
+		Util::trim(loc);
+
+#ifndef _WIN32 
+		if (!loc.empty() && loc[0] != '/') { // when location is relative path then we prepend the configured titan dir
+			loc = Config::getTitanDir() + loc;
+		}
+#endif
 
 		Service s;
 

@@ -55,6 +55,11 @@ namespace gs {
 
 				buf[count] = 0;
 
+				if (count > 0 && buf[count - 1] == '\r') {
+					--count;
+					buf[count] = 0;
+				}
+
 				if (c == -1 && count == 0)
 					count = -1;
 
