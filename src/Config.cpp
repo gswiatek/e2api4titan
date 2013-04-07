@@ -53,6 +53,9 @@ string Config::m_titanDir("/var/etc/titan/");
 string Config::m_etcDir("/etc/");
 #endif
 
+string Config::m_logFile("/tmp/e2webserv.log");
+size_t Config::m_maxLogFileSize(10);
+
 const bool& Config::isDaemon() {
 	return m_daemon;
 }
@@ -88,6 +91,14 @@ const string& Config::getTitanDir() {
 
 const string& Config::getEtcDir() {
 	return m_etcDir;
+}
+
+const string& Config::getLogFile() {
+	return m_logFile;
+}
+
+size_t Config::getMaxLogFileSize() {
+	return m_maxLogFileSize;
 }
 
 bool Config::parse(int argc, const char** argv) {

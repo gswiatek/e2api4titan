@@ -28,6 +28,7 @@
 
 #include "FileHelper.h"
 #include "LineHandler.h"
+#include "Log.h"
 #include <iostream>
 #include <fstream>
 
@@ -35,10 +36,15 @@ using namespace gs::e2;
 using namespace std;
 
 void FileHelper::readConfigFile(const string& fileName, LineHandler& handler) {
+	Log* log = Log::getLogger();
+
+	log->log(Log::DEBUG, "ADP", "read: " + fileName);
 	ifstream is(fileName.c_str());
 
 	if (is) {
 		handleStream(is, handler);
+	} else {
+		log->log(Log::ERROR, "ADP", "open failed for: " + fileName);
 	}
 
 	is.close();
@@ -46,7 +52,6 @@ void FileHelper::readConfigFile(const string& fileName, LineHandler& handler) {
 
 void FileHelper::handleStream(istream& is, LineHandler& handler) {
 	static const int bufSize = 4096;
-
 
 	char buf[bufSize];
 
@@ -76,4 +81,6 @@ void FileHelper::handleStream(istream& is, LineHandler& handler) {
 
 		count = readLine(is, buf, bufSize);
 	}
+
+	handler.finished();
 }

@@ -67,10 +67,24 @@ string Util::getXml(const string& data) {
 
 string Util::getTitanRef(const string& e2Ref) {
 	if (e2Ref.find("1:7:1:") == 0) { // bouquet
-		string::size_type pos = e2Ref.rfind(':');
+		static string fromBouquet("FROM BOUQUET \"");
+		static string orderBy("\" ORDER BY");
+		string::size_type pos = e2Ref.find(fromBouquet);
 
 		if (pos != string::npos) {
-			return e2Ref.substr(pos + 1);
+			string res = e2Ref.substr(pos + fromBouquet.size());
+
+			pos = res.find(orderBy);
+
+			if (pos != string::npos) {
+				return res.substr(0, pos);
+			}
+		} else {
+			pos = e2Ref.rfind(':');
+
+			if (pos != string::npos) {
+				return e2Ref.substr(pos + 1);
+			}
 		}
 	} else if (e2Ref.find("1:0:0:0:0:0:0:0:0:0:") == 0) { // movies
 		string::size_type pos = e2Ref.rfind(':');

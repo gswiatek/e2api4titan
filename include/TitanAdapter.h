@@ -80,9 +80,9 @@ namespace gs {
 			int system;
 		} Transponder;
 
-		typedef struct titanCurrent {
+		typedef struct titanChannel {
 		public:
-			titanCurrent(): proc(0), serviceId(0), transponderId(0), serviceType(0), eventId(0), actStart(0), nextStart(0), nextStop(0), nextId(0) {
+			titanChannel(): proc(0), serviceId(0), transponderId(0), serviceType(0), eventId(0), actStart(0), nextStart(0), nextStop(0), nextId(0) {
 
 			}
 			std::string channelName;
@@ -98,7 +98,7 @@ namespace gs {
 			time_t nextStop;
 			std::string nextDesc;
 			unsigned int nextId;
-		} TitanCurrent;
+		} TitanChannel;
 
 		class TransponderReader: public LineHandler {
 		public:
@@ -106,6 +106,7 @@ namespace gs {
 			virtual ~TransponderReader();
 
 			virtual void handleLine(const std::vector<char*>& line);
+			virtual void finished();
 			bool lookup(unsigned int id, Transponder& transponder) const;
 			void cleanup();
 
@@ -119,6 +120,7 @@ namespace gs {
 			virtual ~EpgReader();
 
 			virtual void handleLine(const std::vector<char*>& line);
+			virtual void finished();
 
 			const EventList& getEvents() const;
 
@@ -131,6 +133,7 @@ namespace gs {
 			ProviderReader();
 			virtual ~ProviderReader();
 			virtual void handleLine(const std::vector<char*>& line);
+			virtual void finished();
 			std::string lookup(unsigned int id) const;
 		private:
 			std::map<unsigned int, std::string> m_providers;
@@ -141,12 +144,16 @@ namespace gs {
 			ChannelReader(ProviderReader& providerReader, TransponderReader& transponderReader);
 			virtual ~ChannelReader();
 			void handleLine(const std::vector<char*>& line);
-			bool lookup(const std::string& id, Channel& channel) const;
+			virtual void finished();
+			bool lookup(const std::string& id, Channel& channel);
+			bool lookup(const std::string& id, std::string& name, Reference& reference) const;
+			Event getEventFromChannel(const TitanChannel& channel, bool nextEvent = false) const;
 			void cleanup();
 		private:
 			ProviderReader& m_providerReader;
 			TransponderReader& m_transponderReader;
-			std::map<std::string, Channel*> m_channels;
+			std::map<std::string, Channel*> m_channels; // this list will be destroyed after reading of bouquets
+			std::map<std::string, Service> m_usedChannels; // channels referenced in bouquets will be cached for the lifetime
 		};
 
 		class ServiceReader: public LineHandler {
@@ -154,8 +161,10 @@ namespace gs {
 			ServiceReader(ChannelReader& reader, bool bouquetFile = false);
 			virtual ~ServiceReader();
 			virtual void handleLine(const std::vector<char*>& line);
+			virtual void finished();
 			const ServiceList& getServices() const;
 			const ServiceList& getServices(const std::string& bouquetName) const;
+			std::string getBouquetName(const std::string& ref) const;
 
 		private:
 			ChannelReader& m_channelReader; 
@@ -163,6 +172,7 @@ namespace gs {
 			ServiceList m_services;
 			ServiceList m_empty;
 			std::map<std::string, ServiceReader*> m_readers;
+			std::map<std::string, std::string> m_bouquetName;
 		};
 
 		class MovieReader: public LineHandler {
@@ -171,6 +181,7 @@ namespace gs {
 			virtual ~MovieReader();
 
 			virtual void handleLine(const std::vector<char*>& line);
+			virtual void finished();
 
 			const std::list<std::string>& getMovies() const;
 
@@ -178,6 +189,22 @@ namespace gs {
 			std::list<std::string> m_movies;
 		};
 		
+		// Responsible for reading row channels information from Titan using Web API
+		class TitanChannelReader: public LineHandler {
+		public:
+			TitanChannelReader();
+			virtual ~TitanChannelReader();
+
+			virtual void handleLine(const std::vector<char*>& line);
+			virtual void finished();
+
+			/** Gets E2 events from the channel information */
+			void getEvents(ChannelReader& channels, EventList& l, bool next = false) const;
+
+		private:
+			std::list<TitanChannel> m_channels;
+		};
+
 		class TitanAdapter {
 		public:
 			TitanAdapter();
@@ -197,6 +224,8 @@ namespace gs {
 			bool zap(const std::string& channelReference);
 			EventList getEpg(const std::string& channelReference);
 			EventList getEpgNow(const std::string& channelReference);
+			EventList getEpgNowForBouquet(const std::string& bouquetName);
+			EventList getEpgNextForBouquet(const std::string& bouquetName);
 			EventList getEpgNext(const std::string& channelReference);
 			bool setPowerState(PowerState state);
 			CurrentService getCurrent();
@@ -210,7 +239,7 @@ namespace gs {
 
 		private:
 			bool getEpg(const std::string& ref, Event& event);
-			bool getActive(TitanCurrent& currentService);
+			bool getActive(TitanChannel& currentService);
 
 			void readInfo();
 			void readBouquets();

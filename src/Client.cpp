@@ -29,6 +29,8 @@
 #include "Client.h"
 #include "Version.h"
 #include "mongoose.h"
+#include "Log.h"
+#include "Util.h"
 
 #include <iostream>
 #include <sstream>
@@ -37,8 +39,7 @@ using namespace std;
 using namespace gs::e2;
 
 bool Client::get(const string& host, int port, const string& uri, string& data) {
-	// TODO: log
-	//cout << "get: " << host << ":" << port  << uri << endl;
+	Log::getLogger()->log(Log::DEBUG, "CLI", "GET: " + uri);
 
 	static const size_t bufSize = 4096;
 	static const string nl = "\r\n";
@@ -69,11 +70,11 @@ bool Client::get(const string& host, int port, const string& uri, string& data) 
 
 		mg_close_connection(conn);
 
+		Log::getLogger()->log(Log::DEBUG, "CLI", "OK, len=" + Util::valueOf(data.size()));
+
 		return true;
 	} else {
-		// TODO: log
-		//cout << "connection failed" << endl;
-		//cout << buf << endl;
+		Log::getLogger()->log(Log::ERROR, "CLI", "conn failed: " + host + ":" + Util::valueOf(port));
 
 		return false;
 	}

@@ -1,6 +1,8 @@
 C_SRC=src/mongoose.c
 
 CPP_SRC=src/Config.cpp\
+	src/Mutex.cpp\
+	src/Log.cpp\
 	src/Version.cpp\
 	src/Util.cpp\
 	src/FileHelper.cpp\

@@ -47,7 +47,9 @@ namespace gs {
 			static const int& getTitanPort();
 			static const int& getTitanDataPort();
 			static const std::string& getTitanDir();
-			static const std::string& getEtcDir();	
+			static const std::string& getEtcDir();
+			static const std::string& getLogFile();
+			static std::size_t getMaxLogFileSize();
 
 		private:
 			Config();
@@ -62,6 +64,8 @@ namespace gs {
 			static int m_dataPort; /**< Enigma2 data port (default: 8001) */
 			static std::string m_titanDir; /**< Directory where the bouquets and channels are stored (/var/etc/titan) */
 			static std::string m_etcDir; /**< etc directory with firmware information (/etc) */
+			static std::string m_logFile; /**< The file used for logging (default: /tmp/e2webserv.log */
+			static std::size_t m_maxLogFileSize; /** Max log file size in KB (default: 10) */
 		};
 	}
 }

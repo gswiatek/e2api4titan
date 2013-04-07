@@ -38,6 +38,7 @@ namespace gs {
 
 		class FileHelper {
 		public:
+			/** We perform here parsing of the Titan specific files. Each parsed line will be delegated to the handler */
 			static void readConfigFile(const std::string& fileName, LineHandler& handler);
 
 			static void handleStream(std::istream& is, LineHandler& handler);

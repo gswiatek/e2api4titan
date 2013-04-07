@@ -31,6 +31,7 @@
 #include "TitanAdapter.h"
 #include "Util.h"
 #include "Version.h"
+#include "Log.h"
 
 #include <string>
 #include <sstream>
@@ -86,8 +87,13 @@ void handle(struct mg_connection* conn, std::string& uri, const string& query) {
 	static const string xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
 	static const string nl = "\r\n";
 
-	// TODO: log
-	//cout << "handle: uri=" << uri << ", query=" << query << endl;
+	string msg = "GET " + uri;
+
+	if (!query.empty()) {
+		msg.append(", q=").append(query);
+	}
+
+	Log::getLogger()->log(Log::INFO, "SRV", msg);
 
 	bool notFound = false;
 
@@ -219,8 +225,14 @@ void handle(struct mg_connection* conn, std::string& uri, const string& query) {
 			EventList l;
 			os << xml << endl;
 			os << l;
-		} else if ((uri == "epgnow" || uri == "epgnext") && query.find("bRef=") == 0) {
-			EventList l; // TODO:
+		} else if ((uri == "epgnow") && query.find("bRef=") == 0) {
+			string ref = Util::getTitanRef(query.substr(5));
+			EventList l = TitanAdapter::getAdapter()->getEpgNowForBouquet(ref);
+			os << xml << endl;
+			os << l;
+		} else if ((uri == "epgnext") && query.find("bRef=") == 0) {
+			string ref = Util::getTitanRef(query.substr(5));
+			EventList l = TitanAdapter::getAdapter()->getEpgNextForBouquet(ref);
 			os << xml << endl;
 			os << l;
 		} else if (uri == "vol") { // gets or sets volume
@@ -270,6 +282,8 @@ void handle(struct mg_connection* conn, std::string& uri, const string& query) {
 			response << "Location: http://" <<  server << ":" <<  Config::getTitanDataPort() << "/0%2c0%2c/media/hdd/movie/" << ref << nl << nl;
 		}
 
+		Log::getLogger()->log(Log::INFO, "SRV", "302 Moved Temporarily");
+
 		string resp = response.str();
 		mg_write(conn, resp.c_str(), resp.length());
 
@@ -279,10 +293,13 @@ void handle(struct mg_connection* conn, std::string& uri, const string& query) {
 	
 		ostringstream response;
 		string server = movedTemporarily(conn, response);
+	
 		
 		if (!server.empty()) {
 			response << "Location: http://" << server << ":" << Config::getTitanDataPort() << uri << nl << nl;
 		}
+
+		Log::getLogger()->log(Log::INFO, "SRV", "302 Moved Temporarily");
 
 		string resp = response.str();
 		mg_write(conn, resp.c_str(), resp.length());
@@ -307,11 +324,13 @@ void handle(struct mg_connection* conn, std::string& uri, const string& query) {
 	int len = data.length();
 
 	if (notFound) {
+		Log::getLogger()->log(Log::INFO, "SRV", "404 Not Found");
 		response << "Date: " << Util::getHttpDate() << nl;
 		response << "Connection: close\r\n";
 		response << "Server: " << Version::getVersion() << nl;
 	} else {
-		//response << "Transfer-Encoding: chunked\r\n";
+		Log::getLogger()->log(Log::INFO, "SRV", "200 OK, len=" + Util::valueOf(len));
+
 		response << "Date: " << Util::getHttpDate() << nl;
 		response << "Content-Type: text/xml; charset=UTF-8\r\n";
 		response << "Content-Length: " << len << nl;
@@ -343,7 +362,9 @@ int requestHandler(struct mg_connection* conn) {
 		query = buf;
 	}
 
+	Log::getLogger()->log(Log::DEBUG, "SRV", "new request");
 	handle(conn, uri, query);
+	Log::getLogger()->log(Log::DEBUG, "SRV", "request handled");
 
 	return 1;
 }
@@ -391,6 +412,11 @@ int main(int argc, char** argv) {
 		startAsDaemon();
 	}
 
+	Log log(Config::getLogFile(), Config::getMaxLogFileSize() * 1024);
+	Log::setLogger(&log);
+
+	log.log(Log::INFO, "SRV", "start server: " + Version::getVersion());
+
 	TitanAdapter adapter;
 	adapter.init();
 
@@ -406,9 +432,14 @@ int main(int argc, char** argv) {
 	ctx = mg_start(&callbacks, 0, options);
 
 	if (!ctx) {
-		cerr << "Server could not be started (please check '/etc/inetd.conf' if port 8001 is not used)" << endl;
+		string msg("Server could not be started (please check '/etc/inetd.conf' if port 8001 is not used)");
+		log.log(Log::ERROR, "SRV", msg);
+		cerr << msg << endl;
+
 		return -1;
 	}
+
+	log.log(Log::INFO, "SRV", "running");
 
 	if (!Config::isDaemon()) {
 		cin.ignore();

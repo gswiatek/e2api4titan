@@ -93,7 +93,7 @@ namespace gs {
 
 		typedef struct reference {
 		public:
-			reference(): type(RT_DVB), flags(0), tv_radio(1), sid(0), tid(0), nid(0), dvbName(0), unknown1(0), unknown2(0), unknown3(0)  {
+			reference(): type(RT_INVALID), flags(0), tv_radio(1), sid(0), tid(0), nid(0), dvbName(0), unknown1(0), unknown2(0), unknown3(0)  {
 
 			}
 
@@ -161,6 +161,8 @@ namespace gs {
 			std::string title;
 			std::string desc;
 			std::string extended;
+			Reference service;
+			std::string servicveName;
 		} Event;
 
 		typedef std::list<Event> EventList;
@@ -185,7 +187,9 @@ namespace gs {
 				<< ref.unknown1 << ':' << std::hex << ref.unknown2 << ':' << ref.unknown3 << ':' << std::dec;
 			
 			if (!ref.path.empty()) {
+				os << "FROM BOUQUET \"";
 				os << Util::getXml(ref.path);
+				os << "\" ORDER BY bouquet";
 			}
 
 			return os;
@@ -252,16 +256,59 @@ namespace gs {
 			return os;
 		}
 
+		/*inline void write(std::ostream& os, int val) {
+			if (val > 0) {
+				os << val;
+			} else {
+				os << "None";
+			}
+		}
+
+		inline void write(std::ostream& os, const std::string& val) {
+			if (!val.empty()) {
+				os << val;
+			} else {
+				os << "None";
+			}
+		}*/
+
 		inline std::ostream& operator<<(std::ostream& os, const Event& event) {
 
 			os << "<e2event>" << std::endl;
-			os << "<e2eventid>" << event.id << "</e2eventid>" << std::endl;
-			os << "<e2eventstart>" << event.start << "</e2eventstart>" << std::endl;
-			os << "<e2eventduration>" << event.dur << "</e2eventduration>" << std::endl;
-			os << "<e2eventcurrenttime>" << event.current << "</e2eventcurrenttime>" << std::endl;
-			os << "<e2eventtitle>" << Util::getXml(event.title) << "</e2eventtitle>" << std::endl;
-			os << "<e2eventdescription>" << Util::getXml(event.desc) << "</e2eventdescription>" << std::endl;
-			os << "<e2eventdescriptionextended>" << Util::getXml(event.extended) << "</e2eventdescriptionextended>" << std::endl;
+
+			os << "<e2eventid>";
+			os << event.id;
+			os << "</e2eventid>" << std::endl;
+
+			os << "<e2eventstart>";
+			os << event.start;
+			os << "</e2eventstart>" << std::endl;
+
+			os << "<e2eventduration>";
+			os << event.dur;
+			os << "</e2eventduration>" << std::endl;
+
+			os << "<e2eventcurrenttime>";
+			os << event.current;
+			os << "</e2eventcurrenttime>" << std::endl;
+
+			os << "<e2eventtitle>";
+			os << Util::getXml(event.title);
+			os << "</e2eventtitle>" << std::endl;
+
+			os << "<e2eventdescription>";
+			os << Util::getXml(event.desc);
+			os << "</e2eventdescription>" << std::endl;
+
+			os << "<e2eventdescriptionextended>";
+			os << Util::getXml(event.extended);
+			os << "</e2eventdescriptionextended>" << std::endl;
+
+			if (event.service.type != RT_INVALID) {
+				os << "<e2eventservicereference>" << event.service << "</e2eventservicereference>" << std::endl;
+				os << "<e2eventservicename>" << Util::getXml(event.servicveName) << "</e2eventservicename>" << std::endl;
+			}
+
 			os << "</e2event>" << std::endl;
 
 			return os;

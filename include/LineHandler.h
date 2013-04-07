@@ -33,10 +33,14 @@
 
 namespace gs {
 	namespace e2 {
+		/** Handler for titan specific files where values are delimited by hash char (#) */
 		class LineHandler {
 		public:
 			virtual ~LineHandler() { }
+			/** The parsed line with values stored in the vector is passed to the handler */
 			virtual void handleLine(const std::vector<char*>& line) = 0;
+			/** Will be invoked after reading of all lines */
+			virtual void finished()  { }
 		};
 	}
 }

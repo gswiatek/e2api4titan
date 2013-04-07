@@ -12,7 +12,7 @@
 // distribution.
 //    * Neither the name of Grzegorz Swiatek nor the names of its
 // contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
+// this software without specific prior written permission.tr
 // 
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 // "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -31,6 +31,7 @@
 #include "Config.h"
 #include "Client.h"
 #include "Util.h"
+#include "Log.h"
 
 #include <iostream>
 #include <sstream>
@@ -112,6 +113,7 @@ TitanAdapter::~TitanAdapter() {
 }
 
 void TitanAdapter::init() {
+	Log::getLogger()->log(Log::DEBUG, "ADP", "init");
 	m_adapter = this; // store the reference
 
 	readInfo();
@@ -165,7 +167,8 @@ std::list<std::string> TitanAdapter::getLocations() {
 }
 
 void TitanAdapter::readInfo() {
-	
+	Log::getLogger()->log(Log::DEBUG, "ADP", "readInfo");
+
 #ifndef _WIN32
 	const char* frontendNames[] = {"A", "B", "C", "D", 0};
 	int num = 0; 
@@ -222,6 +225,8 @@ void TitanAdapter::readInfo() {
 		}
 
 		in.close();
+	} else {
+		Log::getLogger()->log(Log::ERROR, "ADP", "could not read file: " + modelFile);
 	}
 
 	string versionFile = Config::getEtcDir() + "version";
@@ -288,6 +293,7 @@ EventList TitanAdapter::getEpg(const string& serviceRef) {
 	EventList res;
 
 	string id = serviceRef;
+
 	replace(id.begin(), id.end(), ',', '&');
 
 	string reply;
@@ -299,7 +305,19 @@ EventList TitanAdapter::getEpg(const string& serviceRef) {
 
 		FileHelper::handleStream(is, reader);
 
-		return reader.getEvents();
+		res = reader.getEvents();
+
+		if (!res.empty()) {
+			Reference ref; // the reference
+			string name; // the name of the channel
+
+			if (m_channelReader.lookup(serviceRef, name, ref)) {
+				for (EventList::iterator it = res.begin(); it != res.end(); ++it) {
+					it->service = ref;
+					it->servicveName = name;
+				}
+			}
+		}
 	}
 
 	return res;
@@ -435,7 +453,7 @@ bool TitanAdapter::getEpg(const string& ref, Event& event) {
 EventList TitanAdapter::getEpgNow(const string& ref) {
 
 	EventList res;
-	TitanCurrent current;
+	TitanChannel current;
 
 	if (getActive(current)) {
 		if (current.eventId > 0) {
@@ -454,7 +472,7 @@ EventList TitanAdapter::getEpgNow(const string& ref) {
 EventList TitanAdapter::getEpgNext(const string& ref) {
 	EventList res;
 
-	TitanCurrent current;
+	TitanChannel current;
 
 	if (getActive(current)) {
 		if (current.nextId > 0) { // when next id is set then get the whole EPG info
@@ -480,7 +498,7 @@ EventList TitanAdapter::getEpgNext(const string& ref) {
 }
 
 
-bool TitanAdapter::getActive(TitanCurrent& current) {
+bool TitanAdapter::getActive(TitanChannel& current) {
 	string reply;
 
 	if (Client::get(Config::getTitanHost(), Config::getTitanPort(), "/queryraw?getaktservice", reply)) {
@@ -519,11 +537,12 @@ bool TitanAdapter::getActive(TitanCurrent& current) {
 CurrentService TitanAdapter::getCurrent() {
 
 	CurrentService res;
-	TitanCurrent titanCurrent;
+	TitanChannel titanCurrent;
 
 	if (getActive(titanCurrent)) {
 		res.service.bouquet = false;
 		res.service.name = titanCurrent.channelName;
+		res.service.ref.type = RT_DVB;
 		res.service.ref.sid = titanCurrent.serviceId;
 		res.service.ref.tid = titanCurrent.transponderId & 0x0ffff;
 		res.service.ref.nid = (titanCurrent.transponderId >> 16) & 0x0ffff;
@@ -571,6 +590,9 @@ void EpgReader::handleLine(const vector<char*>& line) {
 	m_events.push_back(e);
 }
 
+void EpgReader::finished() {
+	Log::getLogger()->log(Log::DEBUG, "ADP", "events=" + Util::valueOf(m_events.size()));
+}
 
 MovieReader::MovieReader() {
 
@@ -597,6 +619,10 @@ void MovieReader::handleLine(const vector<char*>& line) {
 	}
 }
 
+void MovieReader::finished() {
+	Log::getLogger()->log(Log::DEBUG, "ADP", "movies=" + Util::valueOf(m_movies.size()));
+}
+
 ServiceReader::ServiceReader(ChannelReader& channelReader, bool bouquet): m_channelReader(channelReader), m_bouquetFile(bouquet) {
 
 }
@@ -619,6 +645,7 @@ void ServiceReader::handleLine(const vector<char*>& line) {
 		}
 
 		string loc(line[2]);
+		
 		Util::trim(loc);
 
 #ifndef _WIN32 
@@ -627,6 +654,14 @@ void ServiceReader::handleLine(const vector<char*>& line) {
 		}
 #endif
 
+		string fileName(loc);
+		
+		string::size_type pos = fileName.rfind('/');
+
+		if (pos != string::npos) {
+			fileName = fileName.substr(pos + 1);
+		}
+
 		Service s;
 
 		s.bouquet = true;
@@ -634,14 +669,17 @@ void ServiceReader::handleLine(const vector<char*>& line) {
 		s.ref.type = RT_DVB;
 		s.ref.flags = 7;
 		s.ref.tv_radio = 1;
-		s.ref.path = s.name;
+		s.ref.path = fileName;
 
 		m_services.push_back(s);
+		m_bouquetName[fileName] = s.name;
+
 		ServiceReader* sr = new ServiceReader(m_channelReader, false);
 
+		Log::getLogger()->log(Log::INFO, "ADP", "read bouquet: " + loc);
 		FileHelper::readConfigFile(loc, *sr);
 
-		m_readers[s.name] = sr;
+		m_readers[fileName] = sr;
 	} else {
 		if (line.size() < 2) {
 			return;
@@ -650,6 +688,7 @@ void ServiceReader::handleLine(const vector<char*>& line) {
 		unsigned int sid = Util::getUInt(line[0]);
 		unsigned int tid = Util::getUInt(line[1]);
 		string ref = string(line[0]) + "," + line[1];
+		Util::trim(ref);
 		Service s;
 
 		s.bouquet = false;
@@ -673,18 +712,45 @@ void ServiceReader::handleLine(const vector<char*>& line) {
 
 }
 
+void ServiceReader::finished() {
+	if (m_bouquetFile) {
+		Log::getLogger()->log(Log::DEBUG, "ADP", "bouquets=" + Util::valueOf(m_services.size()));
+	} else {
+		Log::getLogger()->log(Log::DEBUG, "ADP", "services=" + Util::valueOf(m_services.size()));
+	}
+}
+
 const ServiceList& ServiceReader::getServices() const {
 	return m_services;
 }
 
 const ServiceList& ServiceReader::getServices(const string& bouquet) const {
+
 	map<string, ServiceReader*>::const_iterator it = m_readers.find(bouquet);
 
 	if (it != m_readers.end()) {
 		return it->second->getServices();
 	} else {
+		Log::getLogger()->log(Log::ERROR, "ADP", "bouquet not found: '" + bouquet + "'");
+
+		if (bouquet == "bouquets.tv") { // return all bouquets
+			return getServices();
+		}
+
 		return m_empty;
 	}
+}
+
+string ServiceReader::getBouquetName(const string& ref) const {
+	string res;
+
+	map<string, string>::const_iterator it = m_bouquetName.find(ref);
+
+	if (it != m_bouquetName.end()) {
+		return it->second;
+	}
+
+	return res;
 }
 
 
@@ -717,6 +783,7 @@ void ChannelReader::handleLine(const vector<char*>& line) {
 	unsigned int tid = Util::getUInt(line[1]);
 
 	c->serv.name = line[0];
+	c->serv.ref.type = RT_DVB;
 	c->serv.ref.tid = tid & 0x0ffff;
 	c->serv.ref.nid = (tid >> 16) & 0x0ffff;
 
@@ -732,17 +799,70 @@ void ChannelReader::handleLine(const vector<char*>& line) {
 	c->apid = Util::getUInt(line[9]);
 
 	string id = string(line[3]) + "," + line[1];
+	Util::trim(id);
 	m_channels[id] = c;
 }
 
-bool ChannelReader::lookup(const string& id, Channel& channel) const {
+
+void ChannelReader::finished() {
+	Log::getLogger()->log(Log::DEBUG, "ADP", "channels=" + Util::valueOf(m_channels.size()));
+}
+
+
+bool ChannelReader::lookup(const string& id, Channel& channel) {
 	bool res = false;
 	map<string, Channel*>::const_iterator it = m_channels.find(id);
 
 	if (it != m_channels.end()) {
 		res = true;
-
 		channel = *it->second;
+
+		m_usedChannels[id] = channel.serv; // store the used channel
+	} else {
+		Log::getLogger()->log(Log::ERROR, "ADP", "channel not found: '" + id + "'");
+	}
+
+	return res;
+}
+
+bool ChannelReader::lookup(const string&id, string& name, Reference& ref) const {
+	bool res = false;
+	map<string, Service>::const_iterator it = m_usedChannels.find(id);
+
+	if (it != m_usedChannels.end()) {
+		const Service& service = it->second;
+
+		res = true;
+		name = service.name;
+		ref = service.ref;
+	}
+
+	return res;
+}
+
+
+Event ChannelReader::getEventFromChannel(const TitanChannel& channel, bool next) const {
+	Event res;
+
+	res.current = time(0);
+	res.desc = (next ? channel.nextDesc : channel.actDesc);
+	res.title = res.desc;
+	res.servicveName = channel.channelName;
+	res.start = (next ? channel.nextStart : channel.actStart);
+	res.dur = (next ? (channel.nextStop - res.start) : (channel.nextStart - res.start));
+	res.id = (next ? channel.nextId : channel.eventId);
+
+	string ref = Util::valueOf(channel.serviceId) + "," + Util::valueOf(channel.transponderId);
+
+	map<string, Channel*>::const_iterator it = m_channels.find(ref);
+
+	if (it != m_channels.end()) {
+		res.service = it->second->serv.ref;
+	} else {
+		res.service.type = RT_DVB;
+		res.service.sid = channel.serviceId;
+		res.service.tid = channel.transponderId & 0x0ffff;
+		res.service.nid = (channel.transponderId >> 16) & 0x0ffff;
 	}
 
 	return res;
@@ -767,12 +887,19 @@ void ProviderReader::handleLine(const vector<char*>& line) {
 	m_providers[id] = name;
 }
 
+
+void ProviderReader::finished() {
+	Log::getLogger()->log(Log::DEBUG, "ADP", "providers=" + Util::valueOf(m_providers.size()));
+}
+
 string ProviderReader::lookup(unsigned int id) const {
 	string res;
 	map<unsigned int, string>::const_iterator it = m_providers.find(id);
 
 	if (it != m_providers.end()) {
 		res = it->second;
+	} else {
+		// Log::getLogger()->log(Log::ERROR, "ADP", "provider not found: " + Util::valueOf(id));
 	}
 
 	return res;
@@ -812,6 +939,10 @@ void TransponderReader::handleLine(const vector<char*>& line) {
 	m_transponders[id] = t;
 }
 
+void TransponderReader::finished() {
+	Log::getLogger()->log(Log::DEBUG, "ADP", "transponders=" + Util::valueOf(m_transponders.size()));
+}
+
 bool TransponderReader::lookup(unsigned int id, Transponder& t) const {
 	bool res = false;
 	map<unsigned int, Transponder>::const_iterator it = m_transponders.find(id);
@@ -820,6 +951,8 @@ bool TransponderReader::lookup(unsigned int id, Transponder& t) const {
 		res = true;
 
 		t = it->second;
+	} else {
+		// Log::getLogger()->log(Log::ERROR, "ADP", "transponder not found: " + Util::valueOf(id));
 	}
 
 	return res;
@@ -827,6 +960,57 @@ bool TransponderReader::lookup(unsigned int id, Transponder& t) const {
 
 void TransponderReader::cleanup() {
 	m_transponders.clear();
+}
+
+
+TitanChannelReader::TitanChannelReader() {
+
+}
+
+TitanChannelReader::~TitanChannelReader() {
+
+}
+
+void TitanChannelReader::handleLine(const vector<char*>& line) {
+	if (line.size() < 12) {
+		return;
+	}
+
+	int pos = 0;
+
+	TitanChannel c;
+	c.channelName = line[pos++];
+	c.proc = Util::getInt(line[pos++]);
+	c.serviceId = Util::getUInt(line[pos++]);
+	c.transponderId = Util::getUInt(line[pos++]);
+	c.channelList = line[pos++];
+	c.serviceType = Util::getInt(line[pos++]);
+	c.eventId = Util::getUInt(line[pos++]);
+	c.actStart = Util::getTime(line[pos++]);
+	c.actDesc = line[pos++];
+	c.nextStart = Util::getTime(line[pos++]);
+	c.nextStop = Util::getTime(line[pos++]);
+	c.nextDesc = line[pos];
+
+	if (line.size() > 12) {
+		++pos;
+		c.nextId = Util::getUInt(line[pos]);
+	}
+
+	m_channels.push_back(c);
+}
+
+void TitanChannelReader::finished() {
+	Log::getLogger()->log(Log::DEBUG, "ADP", "channels=" + Util::valueOf(m_channels.size()));
+}
+
+void TitanChannelReader::getEvents(ChannelReader& channels, EventList& events, bool nextEvent) const {
+	std::list<TitanChannel>::const_iterator it = m_channels.begin();
+
+	while (it != m_channels.end()) {
+		events.push_back(channels.getEventFromChannel(*it, nextEvent));
+		++it;
+	}
 }
 
 void TitanAdapter::about(ostream& os, const DeviceInfo& info, const Channel& channel) {
@@ -932,3 +1116,38 @@ bool TitanAdapter::getVolume(Volume& vol) {
 
 	return true; // TODO
 }
+
+EventList TitanAdapter::getEpgNextForBouquet(const string& name) {
+	Log::getLogger()->log(Log::DEBUG, "ADP", "epgnext, bouquet='" + name + "'");
+	string reply;
+	EventList res;
+
+	if (Client::get(Config::getTitanHost(), Config::getTitanPort(), "/queryraw?getbouquetchannel&" + Util::urlEncode(m_serviceReader.getBouquetName(name), true), reply)) {
+		TitanChannelReader r;
+		istringstream is(reply);
+
+		FileHelper::handleStream(is, r);
+
+		r.getEvents(m_channelReader, res, true);
+	}
+
+	return res;
+}
+
+EventList TitanAdapter::getEpgNowForBouquet(const string& name) {
+	Log::getLogger()->log(Log::DEBUG, "ADP", "epgnow, bouquet='" + name + "'");
+	string reply;
+	EventList res;
+
+	if (Client::get(Config::getTitanHost(), Config::getTitanPort(), "/queryraw?getbouquetchannel&" + Util::urlEncode(m_serviceReader.getBouquetName(name), true), reply)) {
+		TitanChannelReader r;
+		istringstream is(reply);
+
+		FileHelper::handleStream(is, r);
+
+		r.getEvents(m_channelReader, res);
+	}
+
+	return res;
+}
+
