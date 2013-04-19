@@ -17,3 +17,13 @@ Known Limitations:
 - No correct check if zapping is allowed (serviceplayable)
 - Timers are not yet implemented
 - Web Authentication not supported
+
+Version 1.1.0 (19.04.2013)
+-------------
+Changes since 1.0.0
+- Timer support (show, add, delete, change)
+- Deletion of recorded movie
+- EPG extensions
+- Various fixes for bouquets and channels
+- Simple debug log implemented
+

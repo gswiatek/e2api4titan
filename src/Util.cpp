@@ -93,31 +93,13 @@ string Util::getTitanRef(const string& e2Ref) {
 			return e2Ref.substr(pos + 1);
 		}
 	} else if (e2Ref.find("1:0:1:") == 0) { // TV channel
-		Reference ref;
-		char c;
-		int v;
 		istringstream is(e2Ref);
-		is >> hex;
-		is >> v;
-		ref.type = (ReferenceType) v;
-		is >> c;
-		is >> hex;
-		is >> ref.flags;
-		is >> c;
-		is >> hex;
-		is >> ref.tv_radio;
-		is >> c;
-		is >> hex;
-		is >> ref.sid;
-		is >> c;
-		is >> hex;
-		is >> ref.tid;
-		is >> c;
-		is >> hex;
-		is >> ref.nid;
+		Reference ref;
+		is >> ref;
+
+		ostringstream os;
 
 		unsigned int tid = (ref.nid << 16) + ref.tid;
-		ostringstream os;
 		os << ref.sid << ',' << tid;
 
 		return os.str();
@@ -125,6 +107,7 @@ string Util::getTitanRef(const string& e2Ref) {
 	
 	return e2Ref;
 }
+
 
 int Util::getInt(const string& data) {
 	int res;
@@ -165,6 +148,20 @@ string Util::getHttpDate() {
 #endif
 	char buf[80];
 	strftime(buf, 80, "%a, %d %b %Y %H:%M:%S GMT", &tm);
+
+	return string(buf);
+}
+
+string Util::getRecDate(time_t t) {
+	struct tm tm;
+
+#ifdef _WIN32
+	localtime_s(&tm, &t);
+#else
+	localtime_r(&t, &tm);
+#endif
+	char buf[80];
+	strftime(buf, 80, "%H:%M %d-%m-%Y", &tm);
 
 	return string(buf);
 }
@@ -290,4 +287,130 @@ void Util::rtrim(string& str) {
 void Util::trim(string& str) {
 	str.erase(0, str.find_first_not_of(" \n\r\t"));
 	str.erase(str.find_last_not_of(" \n\r\t") + 1);
+}
+
+int Util::getAfterEvent(const std::string& str) {
+	int res = getInt(str);
+
+	if (res == 0) { // Auto
+		res = 3;
+	} else if (res == 1) { // None
+		res = 0;
+	} else if (res == 2) { // Standby
+		res = 1;
+	} else if (res == 3) { // Deep-Standby
+		res = 2;
+	} else {
+		res = 3; // set auto as default
+	}
+
+	return res;
+
+}
+
+int Util::getTimerState(const std::string& str) {
+	int res = getInt(str);
+
+	if (res == 0) { // waiting
+
+	} else if (res == 1) { // Running
+		res = 2;
+	} else {
+		res = 3; // set to finished
+	}
+
+	return res;
+
+}
+
+map<string, string> Util::parseQuery(const string& query) {
+	std::map<string, string> res;
+
+	string::size_type start = 0;
+	string::size_type pos = query.find('&');
+	string::size_type pos2;
+
+	string param;
+	string name;
+	string val;
+	char buf[512];
+
+	while (pos != string::npos) {
+		param = query.substr(start, pos - start);
+
+		pos2 = param.find('=');
+
+		if (pos2 != string::npos) {
+			name = param.substr(0, pos2);
+			val = param.substr(pos2 + 1);
+
+			buf[0] = 0;
+			urlDecode(val.c_str(), val.size(), buf, 512);
+			res[name] = buf;
+		} else {
+			res[param] = "";	
+		}
+
+		start = pos + 1;
+
+		pos = query.find('&', start);
+	}
+
+	param = query.substr(start, pos - start);
+
+	pos2 = param.find('=');
+
+	if (pos2 != string::npos) {
+		name = param.substr(0, pos2);
+		val = param.substr(pos2 + 1);
+
+		urlDecode(val.c_str(), val.size(), buf, 512);
+		res[name] = buf;
+	} else {
+		res[param] = "";	
+	}
+	
+	return res;
+}
+
+const string&  Util::getString(const map<string, string>& params, const string& name, const string& def) {
+
+
+	map<string, string>::const_iterator it = params.find(name);
+
+	if (it != params.end()) {
+		return it->second;
+	} else {
+		return def;
+	}
+}
+
+int Util::getInt(const map<string, string>& params, const string& name, int def) {
+	int res;
+
+
+	map<string, string>::const_iterator it = params.find(name);
+
+	if (it != params.end()) {
+		res = getInt(it->second);
+	} else {
+		res = def;
+	}
+
+	return res;
+}
+
+time_t Util::getTime(const map<string, string>& params, const string& name, time_t def) {
+	time_t res;
+
+
+	map<string, string>::const_iterator it = params.find(name);
+
+	if (it != params.end()) {
+		res = getTime(it->second);
+	} else {
+		res = def;
+	}
+
+	return res;
 }

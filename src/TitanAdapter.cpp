@@ -425,6 +425,12 @@ bool TitanAdapter::setPowerState(PowerState state) {
 	return res;
 }
 
+bool TitanAdapter::getEpg(const string& ref, unsigned int eventId, Event& event) {
+	string q = ref + "&" + Util::valueOf(eventId);
+
+	return getEpg(q, event);
+}
+
 bool TitanAdapter::getEpg(const string& ref, Event& event) {
 	string q = ref;
 
@@ -1013,6 +1019,58 @@ void TitanChannelReader::getEvents(ChannelReader& channels, EventList& events, b
 	}
 }
 
+TimerReader::TimerReader(ChannelReader& r): m_channelReader(r) {
+
+}
+
+TimerReader::~TimerReader() {
+
+}
+
+const TimerList& TimerReader::getTimers() const {
+	return m_timers;
+}
+
+void TimerReader::handleLine(const vector<char*>& line) {
+	if (line.size() < 12) {
+		return;
+	}
+
+	Timer t;
+
+	int pos = 0;
+	t.begin = Util::getTime(line[pos++]);
+	t.end = Util::getTime(line[pos++]);
+	t.justPlay = Util::getInt(line[pos++]);
+	t.repeat = Util::getInt(line[pos++]);
+	t.name = line[pos++];
+
+	string sid = line[pos++];
+	string tid = line[pos++];
+	string ref = sid + "," + tid;
+
+	string name;
+	Reference service;
+
+	if (m_channelReader.lookup(ref, name, service)) {
+		t.service = service;
+	}
+
+	t.state = (TimerState) Util::getTimerState(line[pos++]);
+	++pos;
+	t.id = line[pos++];
+	t.serviceName = line[pos++];
+
+	t.afterEvent = (AfterEvent) Util::getAfterEvent(line[pos]);
+
+	m_timers.push_back(t);
+}
+
+void TimerReader::finished() {
+	Log::getLogger()->log(Log::DEBUG, "ADP", "timers=" + Util::valueOf(m_timers.size()));
+}
+
+
 void TitanAdapter::about(ostream& os, const DeviceInfo& info, const Channel& channel) {
 	os << "<e2abouts>";
 	os << "<e2about>";
@@ -1151,3 +1209,92 @@ EventList TitanAdapter::getEpgNowForBouquet(const string& name) {
 	return res;
 }
 
+TimerList TitanAdapter::getTimers() {
+	TimerList res;
+	string reply;
+
+	if (Client::get(Config::getTitanHost(), Config::getTitanPort(), "/queryraw?getrectimer", reply)) {
+		TimerReader r(m_channelReader);
+
+		istringstream is(reply);
+
+		FileHelper::handleStream(is, r);
+
+		res = r.getTimers();
+	}
+
+	return res;
+}
+
+bool TitanAdapter::addTimer(const Timer& timer) {
+	ostringstream os;
+
+	os << "/queryraw?rectimersend";
+
+	os << "&node=";
+	
+	if (!timer.id.empty()) {
+		os << timer.id;
+	} else {
+		os << "0";
+	}
+
+	os << "&name=" << Util::urlEncode(timer.name, true);
+
+	if (timer.justPlay) {
+		os << "&type=switch";
+	} else {
+		os << "&type=record";
+	}
+	
+	os << "&begin=" << Util::urlEncode(Util::getRecDate(timer.begin), true);
+	os << "&end=" << Util::urlEncode(Util::getRecDate(timer.end), true);
+
+	unsigned int tid = (timer.service.nid << 16) + timer.service.tid;
+
+	os << "&sid=" << timer.service.sid << "&tid=" << tid;
+	os << "&repeat=" << timer.repeat;
+	os << "&afterevent=";
+
+	if (timer.afterEvent == AE_AUTO) {
+		os << "auto";
+	} else if (timer.afterEvent == AE_DEEP_STANDBY) {
+		os << "off";
+	} else if (timer.afterEvent == AE_NONE) {
+		os << "nothing";
+	} else if (timer.afterEvent == AE_STANDBY) {
+		os << "standby";
+	}
+
+	os << "&ext=1";
+
+	string reply;
+
+	return Client::get(Config::getTitanHost(), Config::getTitanPort(), os.str(), reply);
+}
+
+bool TitanAdapter::changeTimer(const Timer& timer) {
+	return addTimer(timer);
+}
+
+bool TitanAdapter::deleteTimer(const Timer& timer) {
+	bool deleted = false;
+
+	TimerList timers = getTimers();
+	
+	for (TimerList::const_iterator it = timers.begin(); it != timers.end(); ++it) {
+		const Timer&t = *it;
+
+		if (t == timer) { // we found the timer to delete
+			string reply;
+
+			ostringstream os;
+			os << "/queryraw?delrectimer&" << t.id;
+
+			deleted = Client::get(Config::getTitanHost(), Config::getTitanPort(), os.str(), reply);
+			break;
+		}
+	}
+
+	return deleted;
+}

@@ -2,16 +2,18 @@ Here are my preferences for further development:
 ------------------------------------------------
 
 High:
-- Timers (show, add, delete)
+- Support for web/services.m3u (e.g. to store the playlist in VLC)
 - Direct implementation for movie list to support EPG.
-- Delete recorded movie
 - Transponder check for the E2 HTTP request web/serviceplayable
 - Bug fixes
 - Code improvements and checks (e.g. memory leaks)
-- Cross-compilation for Raspberry Pi 
+
+Medium:
+- IPK build
 
 Low:
 - Radio
+- Cross-compilation for Raspberry Pi 
 
 No priority:
 - Web Basic Authentication

@@ -205,6 +205,22 @@ namespace gs {
 			std::list<TitanChannel> m_channels;
 		};
 
+		/** Used to read Titan timers */
+		class TimerReader: public LineHandler {
+		public:
+			TimerReader(ChannelReader& channelReader);
+			virtual ~TimerReader();
+
+			virtual void handleLine(const std::vector<char*>& line);
+			virtual void finished();
+
+			const TimerList& getTimers() const;
+
+		private:
+			ChannelReader& m_channelReader; 
+			TimerList m_timers;
+		};
+
 		class TitanAdapter {
 		public:
 			TitanAdapter();
@@ -236,6 +252,11 @@ namespace gs {
 			bool getVolume(Volume& vol);
 			bool setMute(bool on, Volume& vol);
 			bool setVolume(int val, Volume& vol);
+			TimerList getTimers();
+			bool addTimer(const Timer& t);
+			bool changeTimer(const Timer& t);
+			bool deleteTimer(const Timer& t);
+			bool getEpg(const std::string& ref, unsigned int id, Event& event);
 
 		private:
 			bool getEpg(const std::string& ref, Event& event);

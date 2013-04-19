@@ -33,9 +33,11 @@
 #include <vector>
 #include <ctime>
 #include <iostream>
+#include <map>
 
 namespace gs {
 	namespace e2 {
+
 		class Util {
 		public:
 			/** Performs XML escaping of the given input string */
@@ -52,6 +54,8 @@ namespace gs {
 			static time_t parseTime(const std::string& fileName);
 			/** Computes current date/time string to be used in HTTP response */
 			static std::string getHttpDate();
+			/** Computes date used for record timers */
+			static std::string getRecDate(time_t t);
 			/** Parses Titan specific lines with values separated by # and delievers the extracted tokens */
 			static std::vector<std::string> getTokens(const std::string& line);
 			/** Converts int value to string */
@@ -73,6 +77,20 @@ namespace gs {
 			static void ltrim(std::string& str);
 			/** Removes all trailing and leading whitespace of the input string */
 			static void trim(std::string& str);
+
+			/** Converts Titan after to event from string to E2 int constant */
+			static int getAfterEvent(const std::string& str);
+			/** Converts Titan timer state from string to E2 int constant */
+			static int getTimerState(const std::string& str);
+
+			static std::map<std::string, std::string> parseQuery(const std::string& query);
+
+			/** Gets a string value for a desired key from the parameters map */
+			static const std::string& getString(const std::map<std::string, std::string>& params, const std::string& name, const std::string& defaultValue = "");
+			/** Gets int value for a desired key from the parameters map */
+			static int getInt(const std::map<std::string, std::string>& params, const std::string& name, int defaultValue = 0);
+			static time_t getTime(const std::map<std::string, std::string>& params, const std::string& name, time_t defaultValue = 0);
+
 		private:
 			Util();
 			~Util();

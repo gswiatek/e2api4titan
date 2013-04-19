@@ -51,6 +51,24 @@
 using namespace std;
 using namespace gs::e2;
 
+Reference getRef(const string& e2Ref) {
+	Reference ref;
+	istringstream is(e2Ref);
+
+	is >> ref;
+
+	return ref;
+}
+
+string getTitanRef(const Reference& ref) {
+	ostringstream os;
+
+	unsigned int tid = (ref.nid << 16) + ref.tid;
+	os << ref.sid << ',' << tid;
+
+	return os.str();
+}
+
 string movedTemporarily(struct mg_connection* conn, ostringstream& response) {
 	string server;
 
@@ -83,7 +101,41 @@ string movedTemporarily(struct mg_connection* conn, ostringstream& response) {
 	return server;
 }
 
-void handle(struct mg_connection* conn, std::string& uri, const string& query) {
+Timer getTimerData(const map<string, string>& params) {
+	Timer t;
+
+	time_t begin = Util::getTime(params, "begin");
+
+	if (begin > 0) {
+		t.begin = begin;
+		t.end = Util::getTime(params, "end");
+		t.name = Util::getString(params, "name");
+		t.repeat = Util::getInt(params, "repeated");
+		t.service = getRef(Util::getString(params, "sRef"));
+
+	} else {
+		Reference ref =  getRef(Util::getString(params, "sRef"));
+		string titanRef = getTitanRef(ref);
+		unsigned int eventId = Util::getInt(params, "eventid");
+
+		Event e;
+		if (TitanAdapter::getAdapter()->getEpg(titanRef, eventId, e)) {
+			t.begin = e.start;
+			t.end = e.start + e.dur;
+			t.name = e.title;
+			t.serviceName = e.servicveName;
+			t.service = ref;
+		}
+	}
+
+	t.id = Util::getString(params, "eit", "");
+	t.afterEvent = (AfterEvent) Util::getInt(params, "afterevent", 3); // auto
+	t.justPlay = Util::getInt(params, "justplay");
+
+	return t;
+}
+
+void handle(struct mg_connection* conn, std::string& uri, const string& query, const map<string, string>& param) {
 	static const string xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
 	static const string nl = "\r\n";
 
@@ -184,6 +236,30 @@ void handle(struct mg_connection* conn, std::string& uri, const string& query) {
 
 			os << xml << endl;
 			os << l;
+		} else if (uri == "timerlist") {
+			TimerList l = TitanAdapter::getAdapter()->getTimers();
+
+			os << xml << endl;
+			os << l;
+		} else if (uri == "timeraddbyeventid" || uri == "timeradd" || uri == "timerdelete" || uri == "timerchange") {
+
+			Timer t = getTimerData(param);
+			bool res;
+			
+			if (uri == "timerdelete") {
+				res = TitanAdapter::getAdapter()->deleteTimer(t); 
+			} else if (uri == "timerchange") {
+				res = TitanAdapter::getAdapter()->changeTimer(t);
+			} else {
+				res = TitanAdapter::getAdapter()->addTimer(t);
+			}
+
+			os << xml << endl;
+			os << "<e2simplexmlresult>";
+			os << "<e2state>" << (res ? "True" : "False") << "</e2state>";
+			os << "<e2statetext>" << (res ? "Ok": "Not ok") << "</e2statetext>";
+			os << "</e2simplexmlresult>";
+
 		} else if (uri == "powerstate" && query.empty()) {	
 			// TODO: response
 			os << xml << endl;
@@ -354,8 +430,13 @@ int requestHandler(struct mg_connection* conn) {
 
 	string uri = request->uri;
 	string query;
+	map<string, string> queryParam;
 
 	if (request->query_string) {
+		query = request->query_string;
+		
+		queryParam = Util::parseQuery(query);
+
 		char buf[512];
 		buf[0] = 0;
 		Util::urlDecode(request->query_string, strlen(request->query_string), buf, 512);
@@ -363,7 +444,7 @@ int requestHandler(struct mg_connection* conn) {
 	}
 
 	Log::getLogger()->log(Log::DEBUG, "SRV", "new request");
-	handle(conn, uri, query);
+	handle(conn, uri, query, queryParam);
 	Log::getLogger()->log(Log::DEBUG, "SRV", "request handled");
 
 	return 1;

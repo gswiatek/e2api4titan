@@ -179,6 +179,39 @@ namespace gs {
 			bool muted;
 		} Volume;
 
+		typedef enum {
+			AE_NONE,
+			AE_STANDBY,
+			AE_DEEP_STANDBY,
+			AE_AUTO
+		} AfterEvent;
+
+		typedef enum {
+			TS_WAITING,
+			TS_PREPARED,
+			TS_RUNNING,
+			TS_FINISHED
+		} TimerState;
+
+
+		typedef struct timer {
+		public :
+			timer(): disabled(false), begin(0), end(0), justPlay(false), afterEvent(AE_AUTO), repeat(0), state(TS_WAITING) { }
+			Reference service;
+			std::string serviceName;
+			std::string id;
+			std::string name;
+			bool disabled;
+			time_t begin;
+			time_t end;
+			bool justPlay;
+			AfterEvent afterEvent;
+			int repeat;
+			TimerState state;
+		} Timer;
+
+		typedef std::list<Timer> TimerList;
+
 		typedef enum  {PS_TOOGLE_STANDBY, PS_DEEP_STANDBY, PS_REBOOT, PS_RESTART, PS_WAKEUP, PS_STANDBY} PowerState;
 
 		inline std::ostream& operator<<(std::ostream& os, const Reference& ref) {
@@ -193,6 +226,45 @@ namespace gs {
 			}
 
 			return os;
+		}
+
+		inline std::istream& operator>>(std::istream& is, Reference& ref) {
+			char c;
+			int v;
+			is >> std::hex;
+			is >> v;
+			ref.type = (ReferenceType) v;
+			is >> c;
+			is >> std::hex;
+			is >> ref.flags;
+			is >> c;
+			is >> std::hex;
+			is >> ref.tv_radio;
+			is >> c;
+			is >> std::hex;
+			is >> ref.sid;
+			is >> c;
+			is >> std::hex;
+			is >> ref.tid;
+			is >> c;
+			is >> std::hex;
+			is >> ref.nid;
+			is >> c;
+			is >> std::hex;
+			is >> ref.dvbName;
+			is >> c;
+			is >> std::hex;
+			is >> ref.unknown1;
+			is >> c;
+			is >> std::hex;
+			is >> ref.unknown2;
+			is >> c;
+			is >> std::hex;
+			is >> ref.unknown3;
+			is >> c;
+			is >> ref.path;
+
+			return is;
 		}
 
 		inline std::ostream& operator<<(std::ostream& os, const Service& service) {
@@ -419,6 +491,84 @@ namespace gs {
 			os << "</e2volume>" << std::endl;
 
 			return os;
+		}
+
+		inline std::ostream& operator<<(std::ostream& os, const Timer& t) {
+
+			os << "<e2timer>";
+			os << "<e2servicereference>" << t.service << "</e2servicereference>";
+			os << "<e2servicename>" << Util::getXml(t.serviceName) << "</e2servicename>";
+			os << "<e2eit>" << t.id << "</e2eit>";
+			os << "<e2name>" << Util::getXml(t.name) << "</e2name>";
+			os << "<e2description></e2description>"; // TODO
+			os << "<e2descriptionextended></e2descriptionextended>"; // TODO
+			os << "<e2disabled>" << t.disabled <<  "</e2disabled>";
+			os << "<e2timebegin>" << t.begin << "</e2timebegin>";
+			os << "<e2timeend>" << t.end << "</e2timeend>";
+			os << "<e2duration>" << (time_t) (t.end - t.begin) << "</e2duration>";
+			os << "<e2startprepare></e2startprepare>"; // TODO
+			os << "<e2justplay>" << t.justPlay << "</e2justplay>";
+			os << "<e2afterevent>" << t.afterEvent << "</e2afterevent>";
+			os << "<e2location>" << "</e2location>"; // TODO
+			os << "<e2tags></e2tags>";
+			os << "<e2logentries></e2logentries>";
+			os << "<e2filename></e2filename>"; // TODO
+			os << "<e2backoff></e2backoff>";
+			os << "<e2nextactivation></e2nextactivation>";
+			os << "<e2firsttryprepare>False</e2firsttryprepare>";
+			os << "<e2state>" << t.state << "</e2state>";
+			os << "<e2repeated>" << t.repeat << "</e2repeated>";
+			os << "<e2dontsave>0</e2dontsave>";
+			os << "<e2cancled>False</e2cancled>";
+			os << "<e2toggledisabled>1</e2toggledisabled>";
+			os << "<e2toggledisabledimg>off</e2toggledisabledimg>";
+			os << "</e2timer>" << std::endl;
+
+			return os;
+		}
+
+		inline std::ostream& operator<<(std::ostream& os, const TimerList& tl) {
+			os << "<e2timerlist>" << std::endl;
+
+			for (std::list<Timer>::const_iterator it = tl.begin(); it != tl.end(); ++it) {
+				os << *it;
+			}
+
+			os << "</e2timerlist>" << std::endl;
+
+			return os;
+		}
+
+		inline bool operator==(const Reference& lhs, const Reference& rhs) {
+			if (lhs.sid != rhs.sid) {
+				return false;
+			}
+
+			if (lhs.tid != rhs.tid) {
+				return false;
+			}
+
+			if (lhs.nid != rhs.nid) {
+				return false;
+			}
+
+			if (lhs.type != rhs.type) {
+				return false;
+			}
+
+			return true;
+		}
+
+		inline bool operator==(const Timer& lhs, const Timer& rhs) {
+			if (lhs.begin != rhs.begin) {
+				return false;
+			}
+
+			if (lhs.end != rhs.end) {
+				return false;
+			}
+
+			return (lhs.service == rhs.service);
 		}
 	}
 }
