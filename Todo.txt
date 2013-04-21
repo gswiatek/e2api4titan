@@ -2,9 +2,7 @@ Here are my preferences for further development:
 ------------------------------------------------
 
 High:
-- Support for web/services.m3u (e.g. to store the playlist in VLC)
 - Direct implementation for movie list to support EPG.
-- Transponder check for the E2 HTTP request web/serviceplayable
 - Bug fixes
 - Code improvements and checks (e.g. memory leaks)
 

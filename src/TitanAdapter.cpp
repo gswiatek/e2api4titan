@@ -148,7 +148,13 @@ const ServiceList& TitanAdapter::getServices() const {
 }
 
 const ServiceList& TitanAdapter::getServices(const std::string& reference) const {
-	return m_serviceReader.getServices(reference);
+	const string& fileName = m_serviceReader.getBouquetFile(reference);
+
+	if (!fileName.empty()) {
+		return m_serviceReader.getServices(fileName);
+	} else {
+		return m_serviceReader.getServices(reference);
+	}
 }
 
 void TitanAdapter::about(DeviceInfo& device, Channel& currentService) {
@@ -540,7 +546,13 @@ bool TitanAdapter::getActive(TitanChannel& current) {
 	return false;
 }
 
-CurrentService TitanAdapter::getCurrent() {
+Reference TitanAdapter::getCurrentReference() {
+	CurrentService service = getCurrent(false);
+
+	return service.service.ref;
+}
+
+CurrentService TitanAdapter::getCurrent(bool withEpg) {
 
 	CurrentService res;
 	TitanChannel titanCurrent;
@@ -555,7 +567,7 @@ CurrentService TitanAdapter::getCurrent() {
 		
 		// TODO: channel lookup, because of DVB namespace
 
-		if (titanCurrent.eventId > 0) {
+		if (withEpg && titanCurrent.eventId > 0) {
 			Event e;
 				
 			if (getEpg(Util::valueOf(titanCurrent.serviceId) + "&" + Util::valueOf(titanCurrent.transponderId) + "&" + Util::valueOf(titanCurrent.eventId), e)) {
@@ -679,6 +691,7 @@ void ServiceReader::handleLine(const vector<char*>& line) {
 
 		m_services.push_back(s);
 		m_bouquetName[fileName] = s.name;
+		m_bouquetFileName[s.name] = fileName;
 
 		ServiceReader* sr = new ServiceReader(m_channelReader, false);
 
@@ -747,8 +760,8 @@ const ServiceList& ServiceReader::getServices(const string& bouquet) const {
 	}
 }
 
-string ServiceReader::getBouquetName(const string& ref) const {
-	string res;
+const string& ServiceReader::getBouquetName(const string& ref) const {
+	static string empty;
 
 	map<string, string>::const_iterator it = m_bouquetName.find(ref);
 
@@ -756,9 +769,20 @@ string ServiceReader::getBouquetName(const string& ref) const {
 		return it->second;
 	}
 
-	return res;
+	return empty;
 }
 
+const string& ServiceReader::getBouquetFile(const string& name) const {
+	static string empty;
+
+	map<string, string>::const_iterator it = m_bouquetFileName.find(name);
+
+	if (it != m_bouquetFileName.end()) {
+		return it->second;
+	}
+
+	return empty;
+}
 
 ChannelReader::ChannelReader(ProviderReader& providerReader, TransponderReader& transponderReader): m_providerReader(providerReader), m_transponderReader(transponderReader) {
 

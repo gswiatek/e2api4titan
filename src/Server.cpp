@@ -101,6 +101,23 @@ string movedTemporarily(struct mg_connection* conn, ostringstream& response) {
 	return server;
 }
 
+void playList(ostream& os, const ServiceList& services, const string& server) {
+	os << "#EXTM3U" << endl;
+	os << "#EXTVLCOPT--http-reconnect=true" << endl;
+
+	for (ServiceList::const_iterator it = services.begin(); it != services.end(); ++it) {
+		const Service& s = *it;
+
+		if (!s.bouquet) {
+			ostringstream ref;
+			ref << s.ref;
+
+			os << "#EXTINF:-1," << s.name.c_str() << endl;
+			os << "http://" << server  << "/" << Util::urlEncode(ref.str()) << endl;
+		}
+	}
+}
+
 Timer getTimerData(const map<string, string>& params) {
 	Timer t;
 
@@ -135,9 +152,39 @@ Timer getTimerData(const map<string, string>& params) {
 	return t;
 }
 
+bool servicePlayAble(const Reference& ref) {
+	Reference current = TitanAdapter::getAdapter()->getCurrentReference();
+
+	return ((ref.tid == current.tid) && (ref.nid == current.nid));
+}
+
+bool servicePlayAble(const Reference& ref, const Reference& playing) {
+	Reference current = TitanAdapter::getAdapter()->getCurrentReference();
+
+	if (current == playing) {
+		return true;
+	}
+
+	return ((ref.tid == current.tid) && (ref.nid == current.nid));
+}
+
+void checkAutoZap(const Reference& ref) {
+	if (Config::isAutoZap()) {
+		if (!servicePlayAble(ref)) {
+			string titanRef = getTitanRef(ref);
+
+			TitanAdapter::getAdapter()->zap(titanRef);
+		}
+	}
+}
+
 void handle(struct mg_connection* conn, std::string& uri, const string& query, const map<string, string>& param) {
 	static const string xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
 	static const string nl = "\r\n";
+	static const string defaultContentType = "Content-Type: text/xml; charset=UTF-8\r\n";
+	static const string m3uContentType = "Content-Type: application/vnd.apple.mpegurl\r\nContent-Disposition: attachmant; filename=playlist.m3u8\r\n";
+
+	string contentType = defaultContentType;
 
 	string msg = "GET " + uri;
 
@@ -167,21 +214,11 @@ void handle(struct mg_connection* conn, std::string& uri, const string& query, c
 			os << xml << endl;
 			os << cs;
 		} else if (uri == "serviceplayable") {
-			string sref;
-			string playing; // TODO:
+			string sref = Util::getString(param, "sRef", "");
+			string playing = Util::getString(param, "sRefPlaying", "");
 
-			if (query.find("sRef=") == 0) {
-				sref = query.substr(5);
-			}
+			bool res = servicePlayAble(getRef(sref), getRef(playing));
 
-			string::size_type pos = sref.find("&sRefPlaying=");
-
-			if (pos != string::npos) {
-				playing = sref.substr(pos + 13);
-				sref = sref.substr(0, pos);
-			}
-
-			bool res = (sref.find("1:0:1") == 0);
 			os << xml << endl;
 			os << "<e2serviceplayable>";
 			os << "<e2servicereference>"  << sref << "</e2servicereference>";
@@ -344,6 +381,14 @@ void handle(struct mg_connection* conn, std::string& uri, const string& query, c
 
 			os << xml << endl;
 			os << device;
+		} else if (uri == "services.m3u") {
+			string ref = Util::getTitanRef(Util::getString(param, "bRef", ""));
+			ServiceList services = TitanAdapter::getAdapter()->getServices(ref);
+			const char* host = mg_get_header(conn, "Host");
+			string server = host;
+
+			playList(os, services, host);
+			contentType = m3uContentType;
 		} else {
 			notFound = true;
 		}
@@ -365,11 +410,14 @@ void handle(struct mg_connection* conn, std::string& uri, const string& query, c
 
 		return;
 	} else if (uri.find("/1:0:1:") == 0) {
+		Reference e2Ref = getRef(uri.substr(1));
+
 		uri = "/" +  Util::urlEncode(Util::getTitanRef(uri.substr(1)));
 	
 		ostringstream response;
 		string server = movedTemporarily(conn, response);
 	
+		checkAutoZap(e2Ref); // we check here if we should automatically zap to the new channel
 		
 		if (!server.empty()) {
 			response << "Location: http://" << server << ":" << Config::getTitanDataPort() << uri << nl << nl;
@@ -408,7 +456,7 @@ void handle(struct mg_connection* conn, std::string& uri, const string& query, c
 		Log::getLogger()->log(Log::INFO, "SRV", "200 OK, len=" + Util::valueOf(len));
 
 		response << "Date: " << Util::getHttpDate() << nl;
-		response << "Content-Type: text/xml; charset=UTF-8\r\n";
+		response << contentType;
 		response << "Content-Length: " << len << nl;
 		response << "Server: " << Version::getVersion() << nl;
 	}

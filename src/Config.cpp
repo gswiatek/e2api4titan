@@ -56,6 +56,8 @@ string Config::m_etcDir("/etc/");
 string Config::m_logFile("/tmp/e2webserv.log");
 size_t Config::m_maxLogFileSize(10);
 
+bool Config::m_autoZap = false;
+
 const bool& Config::isDaemon() {
 	return m_daemon;
 }
@@ -101,6 +103,10 @@ size_t Config::getMaxLogFileSize() {
 	return m_maxLogFileSize;
 }
 
+const bool& Config::isAutoZap() {
+	return m_autoZap;
+}
+
 bool Config::parse(int argc, const char** argv) {
 
 	int pos = 1;
@@ -108,6 +114,8 @@ bool Config::parse(int argc, const char** argv) {
 	while (pos < argc) {
 		if (strcmp(argv[pos], "-b") == 0) {
 			m_daemon = true;
+		} else if (strcmp(argv[pos], "-a") == 0) {
+			m_autoZap = true;
 		} else if (strcmp(argv[pos], "-p") == 0) {
 			if (pos + 1 == argc) {
 				usage(argv[0]);
@@ -175,6 +183,7 @@ void Config::usage(const char* progName) {
 	cerr << progName << "[<option>*]" << endl;
 	cerr << "Options: " << endl;
 	cerr << "\t-b           Start the program in background" << endl;
+	cerr << "\t-a           Enable auto zap" << endl;
 	cerr << "\t-p <num>     Web Server port (default: 8080)" << endl;
 	cerr << "\t-dp <num>    E2 specific data port (default: 8001)" << endl;
 	cerr << "\t-h <ip>      IP of Titan Receiver (default: 127.0.0.1)" << endl;

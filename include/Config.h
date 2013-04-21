@@ -50,12 +50,13 @@ namespace gs {
 			static const std::string& getEtcDir();
 			static const std::string& getLogFile();
 			static std::size_t getMaxLogFileSize();
+			static const bool& isAutoZap();
 
 		private:
 			Config();
 			~Config();
 
-			static bool m_daemon; /**< Should we start as daemon (default: false) */
+			static bool m_daemon; /**< Should we start as daemon? (default: false) */
 			static int m_port; /**< Port for the web server (default: 8080) */
 			static int m_threads; /**< Number of threads used in pool (default: 2) */
 			static std::string m_titanHost; /**< IP for Titan receiver (default: 127.0.0.1) */
@@ -65,7 +66,8 @@ namespace gs {
 			static std::string m_titanDir; /**< Directory where the bouquets and channels are stored (/var/etc/titan) */
 			static std::string m_etcDir; /**< etc directory with firmware information (/etc) */
 			static std::string m_logFile; /**< The file used for logging (default: /tmp/e2webserv.log */
-			static std::size_t m_maxLogFileSize; /** Max log file size in KB (default: 10) */
+			static std::size_t m_maxLogFileSize; /**< Max log file size in KB (default: 10) */
+			static bool m_autoZap; /**< Is auto zap enabled? (default: false) */
 		};
 	}
 }

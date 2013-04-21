@@ -164,15 +164,17 @@ namespace gs {
 			virtual void finished();
 			const ServiceList& getServices() const;
 			const ServiceList& getServices(const std::string& bouquetName) const;
-			std::string getBouquetName(const std::string& ref) const;
+			const std::string& getBouquetName(const std::string& ref) const;
+			const std::string& getBouquetFile(const std::string& bouquteName) const;
 
 		private:
 			ChannelReader& m_channelReader; 
 			bool m_bouquetFile;
 			ServiceList m_services;
 			ServiceList m_empty;
-			std::map<std::string, ServiceReader*> m_readers;
-			std::map<std::string, std::string> m_bouquetName;
+			std::map<std::string, ServiceReader*> m_readers; //  lookup table with bouquet file name as key
+			std::map<std::string, std::string> m_bouquetName; // lookup table with bouquet file name as key and bouquet name as value
+			std::map<std::string, std::string> m_bouquetFileName; // lookup table with bouquet name as key and bouquet file name as value
 		};
 
 		class MovieReader: public LineHandler {
@@ -244,7 +246,7 @@ namespace gs {
 			EventList getEpgNextForBouquet(const std::string& bouquetName);
 			EventList getEpgNext(const std::string& channelReference);
 			bool setPowerState(PowerState state);
-			CurrentService getCurrent();
+			CurrentService getCurrent(bool withEpg = true);
 			MovieList getMovies();
 			std::string getRcName(int code);
 			bool sendRc(int code);
@@ -257,6 +259,7 @@ namespace gs {
 			bool changeTimer(const Timer& t);
 			bool deleteTimer(const Timer& t);
 			bool getEpg(const std::string& ref, unsigned int id, Event& event);
+			Reference getCurrentReference();
 
 		private:
 			bool getEpg(const std::string& ref, Event& event);

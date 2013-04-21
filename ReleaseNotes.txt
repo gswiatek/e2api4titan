@@ -27,3 +27,9 @@ Changes since 1.0.0
 - Various fixes for bouquets and channels
 - Simple debug log implemented
 
+Version 1.1.1 (21.04.2013)
+-------------
+Changes since 1.1.0
+- services.m3u implemented
+- auto zap (to allow it please add the option "-a" to the e2webserv)
+- improvement for serviceplayable (not yet tested)
