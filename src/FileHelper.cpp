@@ -57,29 +57,52 @@ void FileHelper::handleStream(istream& is, LineHandler& handler) {
 
 	int count = readLine(is, buf, bufSize);
 
-	vector<char*> line;
+	vector<string> line;
 	int pos;
 	char* data;
+	bool append;
 
 	while (count != -1) {
-		line.clear();
+		append = !line.empty();
+
 		pos = 0;
 		data = buf;
 
 		while (pos < count - 1) {
 			if (buf[pos] == '#') {
 				buf[pos] = 0;
-				line.push_back(data);
+
+				if (append) {
+					string& lastLine = line[line.size() - 1];
+					lastLine.append(data);
+					append = false;
+				} else {
+					line.push_back(data);
+				}
+
 				data = buf + pos + 1;
 			}
 
 			++pos;
 		}
 
-		line.push_back(data);
-		handler.handleLine(line);
+		if (append) {
+			string& lastLine = line[line.size() - 1];
+			lastLine.append(data);
+		} else {
+			line.push_back(data);
+		}
+
+		if (line.size() >= handler.getTokens()) {
+			handler.handleLine(line);
+			line.clear();
+		}
 
 		count = readLine(is, buf, bufSize);
+	}
+
+	if (!line.empty()) {
+		handler.handleLine(line);
 	}
 
 	handler.finished();

@@ -30,6 +30,7 @@
 #define _gs_e2_LineHandler_h_
 
 #include <vector>
+#include <string>
 
 namespace gs {
 	namespace e2 {
@@ -38,9 +39,26 @@ namespace gs {
 		public:
 			virtual ~LineHandler() { }
 			/** The parsed line with values stored in the vector is passed to the handler */
-			virtual void handleLine(const std::vector<char*>& line) = 0;
+			virtual void handleLine(const std::vector<std::string>& line) = 0;
 			/** Will be invoked after reading of all lines */
 			virtual void finished()  { }
+
+			size_t getTokens() const {
+				return m_tokens;
+			}
+
+			void setTokens(size_t tokens) {
+				m_tokens = tokens;
+			}
+
+		protected:
+			LineHandler(size_t tokens): m_tokens(tokens) {
+
+			}
+
+		private:
+			size_t m_tokens;
+
 		};
 	}
 }

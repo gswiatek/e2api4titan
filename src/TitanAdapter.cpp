@@ -580,7 +580,7 @@ CurrentService TitanAdapter::getCurrent(bool withEpg) {
 	return res;
 }
 
-EpgReader::EpgReader() {
+EpgReader::EpgReader(): LineHandler(6) {
 
 }
 
@@ -592,7 +592,7 @@ const EventList& EpgReader::getEvents() const {
 	return m_events;
 }
 
-void EpgReader::handleLine(const vector<char*>& line) {
+void EpgReader::handleLine(const vector<string>& line) {
 	if (line.size() < 6) {
 		return;
 	}
@@ -612,7 +612,7 @@ void EpgReader::finished() {
 	Log::getLogger()->log(Log::DEBUG, "ADP", "events=" + Util::valueOf(m_events.size()));
 }
 
-MovieReader::MovieReader() {
+MovieReader::MovieReader(): LineHandler(2) {
 
 }
 
@@ -624,7 +624,7 @@ const std::list<std::string>& MovieReader::getMovies() const {
 	return m_movies;
 }
 
-void MovieReader::handleLine(const vector<char*>& line) {
+void MovieReader::handleLine(const vector<string>& line) {
 	if (line.size() < 2) {
 		return;
 	}
@@ -641,8 +641,10 @@ void MovieReader::finished() {
 	Log::getLogger()->log(Log::DEBUG, "ADP", "movies=" + Util::valueOf(m_movies.size()));
 }
 
-ServiceReader::ServiceReader(ChannelReader& channelReader, bool bouquet): m_channelReader(channelReader), m_bouquetFile(bouquet) {
-
+ServiceReader::ServiceReader(ChannelReader& channelReader, bool bouquet): LineHandler(2), m_channelReader(channelReader), m_bouquetFile(bouquet) {
+	if (m_bouquetFile) {
+		setTokens(3);
+	}
 }
 
 ServiceReader::~ServiceReader() {
@@ -656,7 +658,7 @@ ServiceReader::~ServiceReader() {
 	m_readers.clear();
 }
 
-void ServiceReader::handleLine(const vector<char*>& line) {
+void ServiceReader::handleLine(const vector<string>& line) {
 	if (m_bouquetFile) {
 		if (line.size() < 3) {
 			return;
@@ -784,7 +786,7 @@ const string& ServiceReader::getBouquetFile(const string& name) const {
 	return empty;
 }
 
-ChannelReader::ChannelReader(ProviderReader& providerReader, TransponderReader& transponderReader): m_providerReader(providerReader), m_transponderReader(transponderReader) {
+ChannelReader::ChannelReader(ProviderReader& providerReader, TransponderReader& transponderReader): LineHandler(11), m_providerReader(providerReader), m_transponderReader(transponderReader) {
 
 }
 
@@ -803,7 +805,7 @@ void ChannelReader::cleanup() {
 	m_channels.clear();	
 }
 
-void ChannelReader::handleLine(const vector<char*>& line) {
+void ChannelReader::handleLine(const vector<string>& line) {
 	if (line.size() < 11) {
 		return;
 	}
@@ -898,7 +900,7 @@ Event ChannelReader::getEventFromChannel(const TitanChannel& channel, bool next)
 	return res;
 }
 
-ProviderReader::ProviderReader() {
+ProviderReader::ProviderReader(): LineHandler(3) {
 
 }
 
@@ -906,8 +908,8 @@ ProviderReader::~ProviderReader() {
 
 }
 
-void ProviderReader::handleLine(const vector<char*>& line) {
-	if (line.size() < 2) {
+void ProviderReader::handleLine(const vector<string>& line) {
+	if (line.size() < 3) {
 		return;
 	}
 
@@ -935,7 +937,7 @@ string ProviderReader::lookup(unsigned int id) const {
 	return res;
 }
 
-TransponderReader::TransponderReader() {
+TransponderReader::TransponderReader(): LineHandler(12) {
 
 }
 
@@ -943,7 +945,7 @@ TransponderReader::~TransponderReader() {
 
 }
 
-void TransponderReader::handleLine(const vector<char*>& line) {
+void TransponderReader::handleLine(const vector<string>& line) {
 	if (line.size() < 12) {
 		return;
 	}
@@ -993,7 +995,7 @@ void TransponderReader::cleanup() {
 }
 
 
-TitanChannelReader::TitanChannelReader() {
+TitanChannelReader::TitanChannelReader(): LineHandler(14) {
 
 }
 
@@ -1001,7 +1003,7 @@ TitanChannelReader::~TitanChannelReader() {
 
 }
 
-void TitanChannelReader::handleLine(const vector<char*>& line) {
+void TitanChannelReader::handleLine(const vector<string>& line) {
 	if (line.size() < 12) {
 		return;
 	}
@@ -1043,7 +1045,7 @@ void TitanChannelReader::getEvents(ChannelReader& channels, EventList& events, b
 	}
 }
 
-TimerReader::TimerReader(ChannelReader& r): m_channelReader(r) {
+TimerReader::TimerReader(ChannelReader& r): LineHandler(12), m_channelReader(r) {
 
 }
 
@@ -1055,7 +1057,7 @@ const TimerList& TimerReader::getTimers() const {
 	return m_timers;
 }
 
-void TimerReader::handleLine(const vector<char*>& line) {
+void TimerReader::handleLine(const vector<string>& line) {
 	if (line.size() < 12) {
 		return;
 	}

@@ -105,7 +105,7 @@ namespace gs {
 			TransponderReader();
 			virtual ~TransponderReader();
 
-			virtual void handleLine(const std::vector<char*>& line);
+			virtual void handleLine(const std::vector<std::string>& line);
 			virtual void finished();
 			bool lookup(unsigned int id, Transponder& transponder) const;
 			void cleanup();
@@ -119,7 +119,7 @@ namespace gs {
 			EpgReader();
 			virtual ~EpgReader();
 
-			virtual void handleLine(const std::vector<char*>& line);
+			virtual void handleLine(const std::vector<std::string>& line);
 			virtual void finished();
 
 			const EventList& getEvents() const;
@@ -132,7 +132,7 @@ namespace gs {
 		public:
 			ProviderReader();
 			virtual ~ProviderReader();
-			virtual void handleLine(const std::vector<char*>& line);
+			virtual void handleLine(const std::vector<std::string>& line);
 			virtual void finished();
 			std::string lookup(unsigned int id) const;
 		private:
@@ -143,7 +143,7 @@ namespace gs {
 		public:
 			ChannelReader(ProviderReader& providerReader, TransponderReader& transponderReader);
 			virtual ~ChannelReader();
-			void handleLine(const std::vector<char*>& line);
+			void handleLine(const std::vector<std::string>& line);
 			virtual void finished();
 			bool lookup(const std::string& id, Channel& channel);
 			bool lookup(const std::string& id, std::string& name, Reference& reference) const;
@@ -160,7 +160,7 @@ namespace gs {
 		public:
 			ServiceReader(ChannelReader& reader, bool bouquetFile = false);
 			virtual ~ServiceReader();
-			virtual void handleLine(const std::vector<char*>& line);
+			virtual void handleLine(const std::vector<std::string>& line);
 			virtual void finished();
 			const ServiceList& getServices() const;
 			const ServiceList& getServices(const std::string& bouquetName) const;
@@ -182,7 +182,7 @@ namespace gs {
 			MovieReader();
 			virtual ~MovieReader();
 
-			virtual void handleLine(const std::vector<char*>& line);
+			virtual void handleLine(const std::vector<std::string>& line);
 			virtual void finished();
 
 			const std::list<std::string>& getMovies() const;
@@ -197,7 +197,7 @@ namespace gs {
 			TitanChannelReader();
 			virtual ~TitanChannelReader();
 
-			virtual void handleLine(const std::vector<char*>& line);
+			virtual void handleLine(const std::vector<std::string>& line);
 			virtual void finished();
 
 			/** Gets E2 events from the channel information */
@@ -213,7 +213,7 @@ namespace gs {
 			TimerReader(ChannelReader& channelReader);
 			virtual ~TimerReader();
 
-			virtual void handleLine(const std::vector<char*>& line);
+			virtual void handleLine(const std::vector<std::string>& line);
 			virtual void finished();
 
 			const TimerList& getTimers() const;
