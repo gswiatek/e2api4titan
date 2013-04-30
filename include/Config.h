@@ -51,6 +51,8 @@ namespace gs {
 			static const std::string& getLogFile();
 			static std::size_t getMaxLogFileSize();
 			static const bool& isAutoZap();
+			static const bool& isDefaultRecFileNameFormat();
+			static void setDefaultRecFileNameFormat(bool val);
 
 		private:
 			Config();
@@ -68,6 +70,7 @@ namespace gs {
 			static std::string m_logFile; /**< The file used for logging (default: /tmp/e2webserv.log */
 			static std::size_t m_maxLogFileSize; /**< Max log file size in KB (default: 10) */
 			static bool m_autoZap; /**< Is auto zap enabled? (default: false) */
+			static bool m_defaultRecFileNameFormat; /**< True when the format for recorded files is: channel-movie (default: true) */
 		};
 	}
 }

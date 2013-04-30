@@ -36,7 +36,7 @@ namespace gs {
 		public:
 			static const int major = 1;
 			static const int minor = 1;
-			static const int build = 2;
+			static const int build = 3;
 
 			static std::string& getVersion();
 		};

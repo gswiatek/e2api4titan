@@ -58,6 +58,8 @@ size_t Config::m_maxLogFileSize(10);
 
 bool Config::m_autoZap = false;
 
+bool Config::m_defaultRecFileNameFormat = true;
+
 const bool& Config::isDaemon() {
 	return m_daemon;
 }
@@ -105,6 +107,14 @@ size_t Config::getMaxLogFileSize() {
 
 const bool& Config::isAutoZap() {
 	return m_autoZap;
+}
+
+const bool& Config::isDefaultRecFileNameFormat() {
+	return m_defaultRecFileNameFormat;
+}
+
+void Config::setDefaultRecFileNameFormat(bool val) {
+	m_defaultRecFileNameFormat = val;
 }
 
 bool Config::parse(int argc, const char** argv) {

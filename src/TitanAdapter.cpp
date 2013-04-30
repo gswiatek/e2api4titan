@@ -37,6 +37,7 @@
 #include <sstream>
 #include <fstream>
 #include <algorithm>
+#include <cstring>
 
 #ifndef _WIN32
 #include <fcntl.h>
@@ -260,6 +261,31 @@ void TitanAdapter::readInfo() {
 
 		in.close();
 	}
+
+	in.open("/mnt/config/titan.cfg"); // try new titan config file location
+
+	if (!in.is_open()) { // when fail try old titan config file location
+		in.open("/var/etc/titan/titan.cfg");
+	}
+
+	if (in.is_open()) { // check titan config for recorded movie file name format
+		char buf[256];
+		int count = 0;
+
+		while (in.good() && count != -1) {
+			count = FileHelper::readLine(in, buf, 256);
+
+			if (count > 0) {
+				if (strcmp(buf, "recordnamefmt=1") == 0) {
+					Config::setDefaultRecFileNameFormat(false);
+					Log::getLogger()->log(Log::DEBUG, "ADP", "recNameFmt: movie-channel");
+					break;
+				}
+			}
+		}
+
+		in.close();
+	}
 }
 
 void TitanAdapter::readTransponders() {
@@ -360,17 +386,32 @@ MovieList TitanAdapter::getMovies() {
 		m.fileName = name;
 		m.ref.path = name;
 
-		string::size_type pos = name.find('-');
+		if (Config::isDefaultRecFileNameFormat()) { // channel-movie-timestamp
+			string::size_type pos = name.find('-');
 
-		if (pos != string::npos) {
-			m.serviceName = name.substr(0, pos);
+			if (pos != string::npos) {
+				m.serviceName = name.substr(0, pos);
 
-			string::size_type pos2 = name.rfind('-');
+				string::size_type pos2 = name.rfind('-');
 
-			if (pos2 > pos + 1) {
-				m.title = name.substr(pos + 1, pos2 - pos - 1);
+				if (pos2 > pos + 1) {
+					m.title = name.substr(pos + 1, pos2 - pos - 1);
 
-				m.recTime = Util::parseTime(name.substr(pos2 + 1));
+					m.recTime = Util::parseTime(name.substr(pos2 + 1));
+				}
+			}
+		} else { // movie-channel-timestamp
+			string::size_type pos = name.rfind('-');
+
+			if (pos != string::npos) {
+				string::size_type pos2 = name.rfind('-', pos - 1);
+
+				if (pos2 != string::npos) {
+					m.title = name.substr(0, pos2);
+					m.serviceName = name.substr(pos2 + 1, pos - pos2 - 1);
+
+					m.recTime = Util::parseTime(name.substr(pos + 1));
+				}
 			}
 		}
 
