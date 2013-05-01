@@ -158,7 +158,7 @@ namespace gs {
 
 		class ServiceReader: public LineHandler {
 		public:
-			ServiceReader(ChannelReader& reader, bool bouquetFile = false);
+			ServiceReader(ChannelReader& reader, bool bouquetFile = false, bool radioBouquet = false);
 			virtual ~ServiceReader();
 			virtual void handleLine(const std::vector<std::string>& line);
 			virtual void finished();
@@ -170,6 +170,7 @@ namespace gs {
 		private:
 			ChannelReader& m_channelReader; 
 			bool m_bouquetFile;
+			bool m_radioBouquet;
 			ServiceList m_services;
 			ServiceList m_empty;
 			std::map<std::string, ServiceReader*> m_readers; //  lookup table with bouquet file name as key

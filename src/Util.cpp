@@ -66,7 +66,7 @@ string Util::getXml(const string& data) {
 
 
 string Util::getTitanRef(const string& e2Ref) {
-	if (e2Ref.find("1:7:1:") == 0) { // bouquet
+	if (e2Ref.find("1:7:1:") == 0 || e2Ref.find("1:7:2:") == 0) { // TV or radio bouquet
 		static string fromBouquet("FROM BOUQUET \"");
 		static string orderBy("\" ORDER BY");
 		string::size_type pos = e2Ref.find(fromBouquet);
@@ -92,7 +92,7 @@ string Util::getTitanRef(const string& e2Ref) {
 		if (pos != string::npos) {
 			return e2Ref.substr(pos + 1);
 		}
-	} else if (e2Ref.find("1:0:1:") == 0) { // TV channel
+	} else if (e2Ref.find("1:0:1:") == 0 || e2Ref.find("1:0:2:") == 0) { // TV channel or radio channel
 		istringstream is(e2Ref);
 		Reference ref;
 		is >> ref;

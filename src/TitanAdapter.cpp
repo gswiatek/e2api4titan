@@ -675,6 +675,8 @@ void MovieReader::handleLine(const vector<string>& line) {
 	
 	if (type == "1") {
 		m_movies.push_back(name);
+	} else {
+		// TODO: handle subdirectories
 	}
 }
 
@@ -682,7 +684,7 @@ void MovieReader::finished() {
 	Log::getLogger()->log(Log::DEBUG, "ADP", "movies=" + Util::valueOf(m_movies.size()));
 }
 
-ServiceReader::ServiceReader(ChannelReader& channelReader, bool bouquet): LineHandler(2), m_channelReader(channelReader), m_bouquetFile(bouquet) {
+ServiceReader::ServiceReader(ChannelReader& channelReader, bool bouquet, bool radioBouquet): LineHandler(2), m_channelReader(channelReader), m_bouquetFile(bouquet), m_radioBouquet(radioBouquet) {
 	if (m_bouquetFile) {
 		setTokens(3);
 	}
@@ -705,6 +707,7 @@ void ServiceReader::handleLine(const vector<string>& line) {
 			return;
 		}
 
+		m_radioBouquet = (Util::getInt(line[1]) == 1); // check the bouquet type
 		string loc(line[2]);
 		
 		Util::trim(loc);
@@ -729,14 +732,14 @@ void ServiceReader::handleLine(const vector<string>& line) {
 		s.name = line[0];
 		s.ref.type = RT_DVB;
 		s.ref.flags = 7;
-		s.ref.tv_radio = 1;
+		s.ref.tv_radio = (m_radioBouquet ? 2 : 1);
 		s.ref.path = fileName;
 
 		m_services.push_back(s);
 		m_bouquetName[fileName] = s.name;
 		m_bouquetFileName[s.name] = fileName;
 
-		ServiceReader* sr = new ServiceReader(m_channelReader, false);
+		ServiceReader* sr = new ServiceReader(m_channelReader, false, m_radioBouquet);
 
 		Log::getLogger()->log(Log::INFO, "ADP", "read bouquet: " + loc);
 		FileHelper::readConfigFile(loc, *sr);
@@ -755,7 +758,7 @@ void ServiceReader::handleLine(const vector<string>& line) {
 
 		s.bouquet = false;
 		s.ref.type = RT_DVB;
-		s.ref.tv_radio = 1;
+		s.ref.tv_radio = (m_radioBouquet ? 2 : 1);
 		s.ref.sid = sid;
 		s.ref.tid = tid & 0x0ffff;
 		s.ref.nid = (tid >> 16) & 0x0ffff;
