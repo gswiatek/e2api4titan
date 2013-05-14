@@ -87,11 +87,12 @@ string Util::getTitanRef(const string& e2Ref) {
 			}
 		}
 	} else if (e2Ref.find("1:0:0:0:0:0:0:0:0:0:") == 0) { // movies
-		string::size_type pos = e2Ref.rfind(':');
+		/*string::size_type pos = e2Ref.rfind(':');
 
 		if (pos != string::npos) {
 			return e2Ref.substr(pos + 1);
-		}
+		}*/
+		return e2Ref.substr(20);
 	} else if (e2Ref.find("1:0:1:") == 0 || e2Ref.find("1:0:2:") == 0) { // TV channel or radio channel
 		istringstream is(e2Ref);
 		Reference ref;

@@ -136,6 +136,7 @@ namespace gs {
 		public:
 			movie(): recTime(0), len(0), fileSize(0) {
 				ref.tv_radio = 0;
+				ref.type = RT_DVB;
 			}
 
 			Reference ref;
@@ -220,9 +221,15 @@ namespace gs {
 				<< ref.unknown1 << ':' << std::hex << ref.unknown2 << ':' << ref.unknown3 << ':' << std::dec;
 			
 			if (!ref.path.empty()) {
-				os << "FROM BOUQUET \"";
+				if (ref.flags == 7) {
+					os << "FROM BOUQUET \"";
+				}
+
 				os << Util::getXml(ref.path);
-				os << "\" ORDER BY bouquet";
+
+				if (ref.flags == 7) {
+					os << "\" ORDER BY bouquet";
+				}
 			}
 
 			return os;
