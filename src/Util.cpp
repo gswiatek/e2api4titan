@@ -100,7 +100,7 @@ string Util::getTitanRef(const string& e2Ref) {
 
 		ostringstream os;
 
-		unsigned long long tid = (ref.nid << 16) + ref.tid;
+		unsigned long long tid = ((unsigned long long) ref.nid << 16) + ref.tid;
 		os << ref.sid << ',' << tid;
 
 		return os.str();

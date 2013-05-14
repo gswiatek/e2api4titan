@@ -604,7 +604,7 @@ CurrentService TitanAdapter::getCurrent(bool withEpg) {
 		res.service.ref.type = RT_DVB;
 		res.service.ref.sid = titanCurrent.serviceId;
 		res.service.ref.tid = titanCurrent.transponderId & 0x0ffff;
-		res.service.ref.nid = (titanCurrent.transponderId >> 16) & 0x0ffff;
+		res.service.ref.nid = (titanCurrent.transponderId >> 16);
 		
 		// TODO: channel lookup, because of DVB namespace
 
@@ -766,7 +766,7 @@ void ServiceReader::handleLine(const vector<string>& line) {
 		s.ref.tv_radio = (m_radioBouquet ? 2 : 1);
 		s.ref.sid = sid;
 		s.ref.tid = tid & 0x0ffff;
-		s.ref.nid = (tid >> 16) & 0x0ffff;
+		s.ref.nid = (tid >> 16);
 
 		Channel channel;
 
@@ -866,7 +866,7 @@ void ChannelReader::handleLine(const vector<string>& line) {
 	c->serv.name = line[0];
 	c->serv.ref.type = RT_DVB;
 	c->serv.ref.tid = tid & 0x0ffff;
-	c->serv.ref.nid = (tid >> 16) & 0x0ffff;
+	c->serv.ref.nid = (tid >> 16);
 
 	Transponder t;
 
@@ -943,7 +943,7 @@ Event ChannelReader::getEventFromChannel(const TitanChannel& channel, bool next)
 		res.service.type = RT_DVB;
 		res.service.sid = channel.serviceId;
 		res.service.tid = channel.transponderId & 0x0ffff;
-		res.service.nid = (channel.transponderId >> 16) & 0x0ffff;
+		res.service.nid = (channel.transponderId >> 16);
 	}
 
 	return res;
@@ -1003,7 +1003,7 @@ void TransponderReader::handleLine(const vector<string>& line) {
 	Transponder t;
 	unsigned long long id = Util::getULongLong(line[pos++]);
 	
-	t.nid = (id >> 16) & 0x0ffff;
+	t.nid = (id >> 16);
 	t.tid = id & 0x0ffff;
 	t.feType = Util::getInt(line[pos++]);
 	t.freq = Util::getUInt(line[pos++]);
@@ -1325,7 +1325,7 @@ bool TitanAdapter::addTimer(const Timer& timer) {
 	os << "&begin=" << Util::urlEncode(Util::getRecDate(timer.begin), true);
 	os << "&end=" << Util::urlEncode(Util::getRecDate(timer.end), true);
 
-	unsigned long long tid = (timer.service.nid << 16) + timer.service.tid;
+	unsigned long long tid = ((unsigned long long) timer.service.nid << 16) + timer.service.tid;
 
 	os << "&sid=" << timer.service.sid << "&tid=" << tid;
 	os << "&repeat=" << timer.repeat;
