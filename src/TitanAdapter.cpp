@@ -563,7 +563,7 @@ bool TitanAdapter::getActive(TitanChannel& current) {
 			current.channelName = values[pos++];
 			current.proc = Util::getInt(values[pos++]);
 			current.serviceId = Util::getUInt(values[pos++]);
-			current.transponderId = Util::getUInt(values[pos++]);
+			current.transponderId = Util::getULongLong(values[pos++]);
 			current.channelList = values[pos++];
 			current.serviceType = Util::getInt(values[pos++]);
 			current.eventId = Util::getUInt(values[pos++]);
@@ -708,6 +708,11 @@ void ServiceReader::handleLine(const vector<string>& line) {
 		}
 
 		m_radioBouquet = (Util::getInt(line[1]) == 1); // check the bouquet type
+
+		if (m_radioBouquet) {
+			return; // TODO: handle correctly radio bouquets
+		}
+
 		string loc(line[2]);
 		
 		Util::trim(loc);
@@ -751,7 +756,7 @@ void ServiceReader::handleLine(const vector<string>& line) {
 		}
 
 		unsigned int sid = Util::getUInt(line[0]);
-		unsigned int tid = Util::getUInt(line[1]);
+		unsigned long long tid = Util::getULongLong(line[1]);
 		string ref = string(line[0]) + "," + line[1];
 		Util::trim(ref);
 		Service s;
@@ -856,7 +861,7 @@ void ChannelReader::handleLine(const vector<string>& line) {
 
 	Channel* c = new Channel();
 
-	unsigned int tid = Util::getUInt(line[1]);
+	unsigned long long tid = Util::getULongLong(line[1]);
 
 	c->serv.name = line[0];
 	c->serv.ref.type = RT_DVB;
@@ -996,9 +1001,9 @@ void TransponderReader::handleLine(const vector<string>& line) {
 
 	int pos = 0;
 	Transponder t;
-	unsigned int id = Util::getUInt(line[pos++]);
+	unsigned long long id = Util::getULongLong(line[pos++]);
 	
-	t.nid = id >> 16 & 0x0ffff;
+	t.nid = (id >> 16) & 0x0ffff;
 	t.tid = id & 0x0ffff;
 	t.feType = Util::getInt(line[pos++]);
 	t.freq = Util::getUInt(line[pos++]);
@@ -1058,7 +1063,7 @@ void TitanChannelReader::handleLine(const vector<string>& line) {
 	c.channelName = line[pos++];
 	c.proc = Util::getInt(line[pos++]);
 	c.serviceId = Util::getUInt(line[pos++]);
-	c.transponderId = Util::getUInt(line[pos++]);
+	c.transponderId = Util::getULongLong(line[pos++]);
 	c.channelList = line[pos++];
 	c.serviceType = Util::getInt(line[pos++]);
 	c.eventId = Util::getUInt(line[pos++]);
@@ -1320,7 +1325,7 @@ bool TitanAdapter::addTimer(const Timer& timer) {
 	os << "&begin=" << Util::urlEncode(Util::getRecDate(timer.begin), true);
 	os << "&end=" << Util::urlEncode(Util::getRecDate(timer.end), true);
 
-	unsigned int tid = (timer.service.nid << 16) + timer.service.tid;
+	unsigned long long tid = (timer.service.nid << 16) + timer.service.tid;
 
 	os << "&sid=" << timer.service.sid << "&tid=" << tid;
 	os << "&repeat=" << timer.repeat;

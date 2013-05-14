@@ -99,7 +99,7 @@ string Util::getTitanRef(const string& e2Ref) {
 
 		ostringstream os;
 
-		unsigned int tid = (ref.nid << 16) + ref.tid;
+		unsigned long long tid = (ref.nid << 16) + ref.tid;
 		os << ref.sid << ',' << tid;
 
 		return os.str();
@@ -120,6 +120,15 @@ int Util::getInt(const string& data) {
 
 unsigned int Util::getUInt(const string& data) {
 	unsigned int res;
+
+	istringstream is(data);
+	is >> res;
+
+	return res;
+}
+
+unsigned long long Util::getULongLong(const string& data) {
+	unsigned long long res;
 
 	istringstream is(data);
 	is >> res;
@@ -269,6 +278,15 @@ string Util::valueOf(int val) {
 }
 
 string Util::valueOf(unsigned int val) {
+	ostringstream os;
+
+	os << val;
+
+	return os.str();
+}
+
+
+string Util::valueOf(unsigned long long val) {
 	ostringstream os;
 
 	os << val;

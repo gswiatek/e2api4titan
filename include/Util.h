@@ -46,6 +46,8 @@ namespace gs {
 			static std::string getTitanRef(const std::string& e2Ref);
 			/** Extracts unsigned int value from a string */
 			static unsigned int getUInt(const std::string& data);
+			/** Extracts unsigned int value from a string */
+			static unsigned long long getULongLong(const std::string& data);
 			/** Extracts int value from a string */
 			static int getInt(const std::string& data);
 			/** Extracts time_t value from a string */
@@ -62,6 +64,7 @@ namespace gs {
 			static std::string valueOf(int val);
 			/** Converts unsigned int value to string */
 			static std::string valueOf(unsigned int val);
+			static std::string valueOf(unsigned long long val);
 
 			static int urlDecode(const char* src, int src_len, char* dst, int dst_len);
 			/**

@@ -63,7 +63,7 @@ Reference getRef(const string& e2Ref) {
 string getTitanRef(const Reference& ref) {
 	ostringstream os;
 
-	unsigned int tid = (ref.nid << 16) + ref.tid;
+	unsigned long long tid = (ref.nid << 16) + ref.tid;
 	os << ref.sid << ',' << tid;
 
 	return os.str();
@@ -403,7 +403,7 @@ void handle(struct mg_connection* conn, std::string& uri, const string& query, c
 			response << "Location: http://" <<  server << ":" <<  Config::getTitanDataPort() << "/0%2c0%2c/media/hdd/movie/" << ref << nl << nl;
 		}
 
-		Log::getLogger()->log(Log::INFO, "SRV", "302 Moved Temporarily");
+		Log::getLogger()->log(Log::INFO, "SRV", "302 Moved Temporarily, ref=" + ref);
 
 		string resp = response.str();
 		mg_write(conn, resp.c_str(), resp.length());
@@ -419,11 +419,16 @@ void handle(struct mg_connection* conn, std::string& uri, const string& query, c
 	
 		checkAutoZap(e2Ref); // we check here if we should automatically zap to the new channel
 		
+		string location;
+
 		if (!server.empty()) {
-			response << "Location: http://" << server << ":" << Config::getTitanDataPort() << uri << nl << nl;
+			location.reserve(200);
+			location.append("http://").append(server).append(":").append(Util::valueOf(Config::getTitanDataPort())).append(uri);
+
+			response << "Location: " << location << nl << nl;
 		}
 
-		Log::getLogger()->log(Log::INFO, "SRV", "302 Moved Temporarily");
+		Log::getLogger()->log(Log::INFO, "SRV", "302 Moved Temporarily, loc=" + location);
 
 		string resp = response.str();
 		mg_write(conn, resp.c_str(), resp.length());

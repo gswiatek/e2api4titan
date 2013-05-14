@@ -88,7 +88,7 @@ namespace gs {
 			std::string channelName;
 			int proc;
 			unsigned int serviceId;
-			unsigned int transponderId;
+			unsigned long long transponderId;
 			std::string channelList;
 			int serviceType;
 			unsigned int eventId;
