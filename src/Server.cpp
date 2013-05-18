@@ -181,7 +181,7 @@ void checkAutoZap(const Reference& ref) {
 void handle(struct mg_connection* conn, std::string& uri, const string& query, const map<string, string>& param) {
 	static const string xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
 	static const string nl = "\r\n";
-	static const string defaultContentType = "Content-Type: text/xml; charset=UTF-8\r\n";
+	static const string defaultContentType = "Content-Type: application/xhtml+xml; charset=UTF-8\r\n";
 	static const string m3uContentType = "Content-Type: application/vnd.apple.mpegurl\r\nContent-Disposition: attachmant; filename=playlist.m3u8\r\n";
 
 	string contentType = defaultContentType;
@@ -242,9 +242,9 @@ void handle(struct mg_connection* conn, std::string& uri, const string& query, c
 		} else if (uri == "getlocations" || uri == "getcurrlocation") {
 			// add dummy location
 			os << xml << endl;
-			os << "<e2locations>";
-			os << "<e2location>/media/hdd/movie</e2location>" << endl;
-			os << "</e2locations>";
+			os << "<e2locations>" << endl;
+			os << "\t<e2location>/media/hdd/movie/</e2location>" << endl;
+			os << "</e2locations>" << endl;
 		} else if (uri == "movielist") {
 			list<Movie> movies = TitanAdapter::getAdapter()->getMovies();
 			os << xml << endl;
@@ -252,6 +252,7 @@ void handle(struct mg_connection* conn, std::string& uri, const string& query, c
 		} else if ((uri == "moviedelete") && query.find("sRef=") == 0) {
 			string ref = Util::getTitanRef(query.substr(5));
 			bool deleted = TitanAdapter::getAdapter()->deleteMovie(ref);
+			os << xml << endl;
 			os << "<e2simplexmlresult>";
 			os << "<e2state>" << deleted << "</e2state>" << endl;
 			os << "</e2simplexmlresult>";
