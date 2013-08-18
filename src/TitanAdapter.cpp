@@ -117,12 +117,20 @@ void TitanAdapter::init() {
 	Log::getLogger()->log(Log::DEBUG, "ADP", "init");
 	m_adapter = this; // store the reference
 
-	readInfo();
+	map<string, string> config = readInfo();
 
-	readTransponders();
-	readProviders();
-	readChannels();
-	readBouquets();
+	string recordNameFmt = Util::getString(config, "recordnamefmt", "0");
+
+	if (recordNameFmt != "0") {
+		Config::setDefaultRecFileNameFormat(false);
+		Log::getLogger()->log(Log::DEBUG, "ADP", "recNameFmt: movie-channel");
+	}
+
+	readTransponders(Util::getString(config, "transponderfile", "/mnt/settings/transponder"));
+	readProviders(Util::getString(config, "providerfile", "/mnt/settings/provider"));
+	readChannels(Util::getString(config, "channelfile", "/mnt/settings/channel"));
+
+	readBouquets(Util::getString(config, "bouquetfile", "/mnt/settings/bouquets.cfg"), Util::getString(config, "bouquetpath", "/mnt/settings"));
 
 	m_channelReader.cleanup(); // we don't need the channel information anymore
 	m_transponderReader.cleanup();
@@ -173,8 +181,10 @@ std::list<std::string> TitanAdapter::getLocations() {
 	return l;
 }
 
-void TitanAdapter::readInfo() {
+map<string, string> TitanAdapter::readInfo() {
 	Log::getLogger()->log(Log::DEBUG, "ADP", "readInfo");
+
+	map<string, string> titanConfig;
 
 #ifndef _WIN32
 	const char* frontendNames[] = {"A", "B", "C", "D", 0};
@@ -265,50 +275,65 @@ void TitanAdapter::readInfo() {
 	in.open("/mnt/config/titan.cfg"); // try new titan config file location
 
 	if (!in.is_open()) { // when fail try old titan config file location
+		Log::getLogger()->log(Log::INFO, "ADP", "try titan.cfg in /var/etc/titan");
+
 		in.open("/var/etc/titan/titan.cfg");
+	} else {
+		Log::getLogger()->log(Log::INFO, "ADP", "titan.cfg found in /mnt/config");
 	}
 
 	if (in.is_open()) { // check titan config for recorded movie file name format
 		char buf[256];
 		int count = 0;
+		string line;
+		string name;
+		string value;
+		string::size_type pos;
+		string::size_type len;
 
 		while (in.good() && count != -1) {
 			count = FileHelper::readLine(in, buf, 256);
 
 			if (count > 0) {
-				if (strcmp(buf, "recordnamefmt=1") == 0) {
-					Config::setDefaultRecFileNameFormat(false);
-					Log::getLogger()->log(Log::DEBUG, "ADP", "recNameFmt: movie-channel");
-					break;
+				line = buf;
+
+				pos = line.find('=');
+
+				if (pos != string::npos) {
+					name = line.substr(0, pos);
+					len = line.length();
+
+					if (pos < len - 1) {
+						value = line.substr(pos + 1, (len - (pos + 1)));
+					} else {
+						value.clear();
+					}
+
+					titanConfig[name] = value;
 				}
 			}
 		}
 
 		in.close();
 	}
+
+	return titanConfig;
 }
 
-void TitanAdapter::readTransponders() {
-	string config = Config::getTitanDir() + "transponder";
-
+void TitanAdapter::readTransponders(const string& config) {
 	FileHelper::readConfigFile(config, m_transponderReader);
 }
 
-void TitanAdapter::readBouquets() {
-	string config = Config::getTitanDir() + "bouquets.cfg";
-
+void TitanAdapter::readBouquets(const string& config, const string& pathName) {
+	m_serviceReader.setBouquetPath(pathName);
 	FileHelper::readConfigFile(config, m_serviceReader);
 }
 
-void TitanAdapter::readChannels() {
-	string config = Config::getTitanDir() + "channel";
-
+void TitanAdapter::readChannels(const string& config) {
 	FileHelper::readConfigFile(config, m_channelReader);
 }
 
-void TitanAdapter::readProviders() {
-	string config = Config::getTitanDir() + "provider";
-
+void TitanAdapter::readProviders(const string& config) {
 	FileHelper::readConfigFile(config, m_providerReader);
 }
 
@@ -709,17 +734,13 @@ void ServiceReader::handleLine(const vector<string>& line) {
 
 		m_radioBouquet = (Util::getInt(line[1]) == 1); // check the bouquet type
 
-		if (m_radioBouquet) {
-			return; // TODO: handle correctly radio bouquets
-		}
-
 		string loc(line[2]);
 		
 		Util::trim(loc);
 
 #ifndef _WIN32 
-		if (!loc.empty() && loc[0] != '/') { // when location is relative path then we prepend the configured titan dir
-			loc = Config::getTitanDir() + loc;
+		if (!loc.empty() && loc[0] != '/') { // when location is relative path then we prepend the configured bouquet dir
+			loc = m_bouquetPath + "/" + loc;
 		}
 #endif
 
@@ -740,7 +761,12 @@ void ServiceReader::handleLine(const vector<string>& line) {
 		s.ref.tv_radio = (m_radioBouquet ? 2 : 1);
 		s.ref.path = fileName;
 
-		m_services.push_back(s);
+		if (m_radioBouquet) {
+			m_radioServices.push_back(s);
+		} else {
+			m_services.push_back(s);
+		}
+
 		m_bouquetName[fileName] = s.name;
 		m_bouquetFileName[s.name] = fileName;
 
@@ -794,6 +820,10 @@ const ServiceList& ServiceReader::getServices() const {
 	return m_services;
 }
 
+const ServiceList& ServiceReader::getRadioServices() const {
+	return m_radioServices;
+}
+
 const ServiceList& ServiceReader::getServices(const string& bouquet) const {
 
 	map<string, ServiceReader*>::const_iterator it = m_readers.find(bouquet);
@@ -801,11 +831,13 @@ const ServiceList& ServiceReader::getServices(const string& bouquet) const {
 	if (it != m_readers.end()) {
 		return it->second->getServices();
 	} else {
-		Log::getLogger()->log(Log::ERROR, "ADP", "bouquet not found: '" + bouquet + "'");
-
 		if (bouquet == "bouquets.tv") { // return all bouquets
 			return getServices();
+		} else if (bouquet == "bouquets.radio") {
+			return getRadioServices();
 		}
+
+		Log::getLogger()->log(Log::ERROR, "ADP", "bouquet not found: '" + bouquet + "'");
 
 		return m_empty;
 	}
@@ -833,6 +865,11 @@ const string& ServiceReader::getBouquetFile(const string& name) const {
 	}
 
 	return empty;
+}
+
+
+void ServiceReader::setBouquetPath(const string& name) {
+	m_bouquetPath = name;
 }
 
 ChannelReader::ChannelReader(ProviderReader& providerReader, TransponderReader& transponderReader): LineHandler(11), m_providerReader(providerReader), m_transponderReader(transponderReader) {

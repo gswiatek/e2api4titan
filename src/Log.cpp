@@ -51,7 +51,20 @@ void Log::backup() {
 void Log::log(Level l, const string& category, const string& msg) {
 
 	ostringstream os;
-	os << time(0) << " [";
+	time_t t;
+	struct tm tm;
+	char timestamp[15];
+
+	time(&t);
+
+#ifndef _WIN32
+	localtime_r(&t, &tm);
+#else
+	localtime_s(&tm, &t);
+#endif
+
+	strftime(timestamp, 15, "%d.%m %H:%M:%S", &tm);
+	os << timestamp << " [";
 
 #ifndef _WIN32
 	os << std::hex << pthread_self();
