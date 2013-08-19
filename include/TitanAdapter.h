@@ -164,6 +164,7 @@ namespace gs {
 			virtual void finished();
 			const ServiceList& getServices() const;
 			const ServiceList& getRadioServices() const;
+			const ServiceList& getTvServices() const;
 			const ServiceList& getServices(const std::string& bouquetName) const;
 			const std::string& getBouquetName(const std::string& ref) const;
 			const std::string& getBouquetFile(const std::string& bouquteName) const;
@@ -174,8 +175,9 @@ namespace gs {
 			ChannelReader& m_channelReader; 
 			bool m_bouquetFile;
 			bool m_radioBouquet;
-			ServiceList m_services;
-			ServiceList m_radioServices;
+			ServiceList m_services; // all services
+			ServiceList m_radioServices; // only radio
+			ServiceList m_tvServices; // only tv
 			ServiceList m_empty;
 			std::map<std::string, ServiceReader*> m_readers; //  lookup table with bouquet file name as key
 			std::map<std::string, std::string> m_bouquetName; // lookup table with bouquet file name as key and bouquet name as value

@@ -764,8 +764,10 @@ void ServiceReader::handleLine(const vector<string>& line) {
 		if (m_radioBouquet) {
 			m_radioServices.push_back(s);
 		} else {
-			m_services.push_back(s);
+			m_tvServices.push_back(s);
 		}
+
+		m_services.push_back(s);
 
 		m_bouquetName[fileName] = s.name;
 		m_bouquetFileName[s.name] = fileName;
@@ -824,6 +826,10 @@ const ServiceList& ServiceReader::getRadioServices() const {
 	return m_radioServices;
 }
 
+const ServiceList& ServiceReader::getTvServices() const {
+	return m_radioServices;
+}
+
 const ServiceList& ServiceReader::getServices(const string& bouquet) const {
 
 	map<string, ServiceReader*>::const_iterator it = m_readers.find(bouquet);
@@ -831,8 +837,8 @@ const ServiceList& ServiceReader::getServices(const string& bouquet) const {
 	if (it != m_readers.end()) {
 		return it->second->getServices();
 	} else {
-		if (bouquet == "bouquets.tv") { // return all bouquets
-			return getServices();
+		if (bouquet == "bouquets.tv") { // return all TV bouquets
+			return getTvServices();
 		} else if (bouquet == "bouquets.radio") {
 			return getRadioServices();
 		}
