@@ -410,7 +410,7 @@ void handle(struct mg_connection* conn, std::string& uri, const string& query, c
 		mg_write(conn, resp.c_str(), resp.length());
 
 		return;
-	} else if (uri.find("/1:0:1:") == 0) {
+	} else if (uri.find("/1:0:1:") == 0 || uri.find("/1:0:2:") == 0) {
 		Reference e2Ref = getRef(uri.substr(1));
 
 		uri = "/" +  Util::urlEncode(Util::getTitanRef(uri.substr(1)));
