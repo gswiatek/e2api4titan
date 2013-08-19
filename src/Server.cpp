@@ -113,6 +113,11 @@ void playList(ostream& os, const ServiceList& services, const string& server) {
 			ref << s.ref;
 
 			os << "#EXTINF:-1," << s.name.c_str() << endl;
+
+			if (s.ref.tv_radio == 2) {
+				os << "#EXTVLCOPT:no-video" << endl;
+			}
+
 			os << "http://" << server  << "/" << Util::urlEncode(ref.str()) << endl;
 		}
 	}

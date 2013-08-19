@@ -827,23 +827,27 @@ const ServiceList& ServiceReader::getRadioServices() const {
 }
 
 const ServiceList& ServiceReader::getTvServices() const {
-	return m_radioServices;
+	return m_tvServices;
 }
 
 const ServiceList& ServiceReader::getServices(const string& bouquet) const {
+	Log::getLogger()->log(Log::DEBUG, "ADP", "getServices: '" + bouquet + "'");
 
 	map<string, ServiceReader*>::const_iterator it = m_readers.find(bouquet);
 
 	if (it != m_readers.end()) {
+		Log::getLogger()->log(Log::DEBUG, "ADP", "found");
 		return it->second->getServices();
 	} else {
-		if (bouquet == "bouquets.tv") { // return all TV bouquets
+		Log::getLogger()->log(Log::ERROR, "ADP", "bouquet not found: '" + bouquet + "'");
+
+		if (bouquet == "bouquets.tv" || bouquet == "userbouquet.favourites.tv") { // return all TV bouquets
+			Log::getLogger()->log(Log::DEBUG, "ADP", "all TV bouquets");
 			return getTvServices();
-		} else if (bouquet == "bouquets.radio") {
+		} else if (bouquet == "bouquets.radio" || bouquet == "userbouquet.favourites.radio") {
+			Log::getLogger()->log(Log::DEBUG, "ADP", "all radio bouquets");
 			return getRadioServices();
 		}
-
-		Log::getLogger()->log(Log::ERROR, "ADP", "bouquet not found: '" + bouquet + "'");
 
 		return m_empty;
 	}
