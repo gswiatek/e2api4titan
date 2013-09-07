@@ -1,0 +1,23 @@
+#!/bin/sh
+TMP=/tmp/.e2webserv
+
+if [ -f /mnt/config/usercmd.sh ]; then
+	sed -i '/^exit/i/mnt/bin/e2webserv -b -a' /mnt/config/usercmd.sh
+fi
+
+echo "successfully installed"
+
+if [ `df | grep /dev/mtdblock | grep var | sed 's/ \+/ /g' | cut -d ' ' -f4 | head -n1 | wc -l` -eq 1 ]; then
+	SPACE=`df | grep /dev/mtdblock | grep var | sed 's/ \+/ /g' | cut -d ' ' -f4 | head -n1`
+	FREE=`expr $SPACE - 100`
+	echo new freespace size $FREE kb
+else
+	echo "syncing disk"
+	sync
+fi
+
+echo "start e2webserv..."
+/mnt/bin/e2webserv -b -a > /dev/null 2>&1
+echo "done."
+
+exit 0

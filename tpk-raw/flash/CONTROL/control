@@ -1,0 +1,12 @@
+Package: titan-plugin-network-e2webserv
+Architecture: sh4
+Showname: titan-plugin-network-e2webserv
+Version: 1.1.9
+Section: network
+Description: Enigma2 Web-API for Titan receiver.
+Group: 0
+Minversion: 0
+Preinstalled: 0
+Size: 253
+Type: 0
+Titanname: Enigma2 Web-API

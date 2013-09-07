@@ -33,6 +33,7 @@ all: $(EXEC)
 
 $(EXEC): $(OBJ)
 	$(CXX) $(LDFLAGS) $(LIBS) $(OBJ) -o $@
+	cp $(EXEC) sh4/v1.1
 
 .cpp.o:
 	$(CXX) $(CFLAGS) $< -o $@
@@ -43,3 +44,10 @@ $(EXEC): $(OBJ)
 clean:
 	rm -rf $(OBJ) $(EXEC)
 
+tpk: $(EXEC)
+	cp $(EXEC) tpk-raw/flash/mnt/bin
+	cp $(EXEC) tpk-raw/swap/var/swap/bin
+	$(JAVA_HOME)/bin/java -jar java/tpk.jar tpk-raw/flash tpk/titan-plugin-network-e2webserv_1.1.9_sh4.tpk
+	$(JAVA_HOME)/bin/java -jar java/tpk.jar tpk-raw/swap tpk/titan-plugin-swapnetwork-e2webserv_1.1.9_sh4.tpk
+	gzip tpk/titan-plugin-network-e2webserv_1.1.9_sh4.tpk
+	gzip tpk/titan-plugin-swapnetwork-e2webserv_1.1.9_sh4.tpk

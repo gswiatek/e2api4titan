@@ -1,0 +1,16 @@
+#!/bin/sh
+TMP=/tmp/.e2webserv
+
+echo "kill e2webserv if running"
+killall -9 e2webserv > /dev/null 2>&1
+
+if [ `df | grep /dev/mtdblock | grep var | sed 's/ \+/ /g' | cut -d ' ' -f4 | head -n1 | wc -l` -eq 1 ]; then
+	SPACE=`df | grep /dev/mtdblock | grep var | sed 's/ \+/ /g' | cut -d ' ' -f4 | head -n1`
+	FREE=`expr $SPACE - 100`
+	echo new freespace size $FREE kb
+else
+	echo "syncing disk"
+	sync
+fi
+echo "removing e2webserv ..."
+exit 0
