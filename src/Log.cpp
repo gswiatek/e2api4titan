@@ -23,18 +23,31 @@ void Log::setLogger(Log* log) {
 }
 
 Log::Log(const std::string& fileName, size_t maxSize): m_fileName(fileName), m_maxSize(maxSize), m_pos(0) {
-	m_os.open(m_fileName.c_str(),  ios::out | ios::app);
 
-	if (m_os.is_open()) {
-		m_pos = m_os.tellp();
+	if (m_maxSize > 0) {
+		if (m_maxSize > 1024) {
+			m_maxSize = 1024;
+		}
+
+		m_os.open(m_fileName.c_str(),  ios::out | ios::app);
+
+		if (m_os.is_open()) {
+			m_pos = m_os.tellp();
+		}
 	}
 }
 
 Log::~Log() {
-	m_os.close();
+	if (m_maxSize > 0) {
+		m_os.close();
+	}
 }
 
 void Log::backup() {
+	if (m_maxSize < 1) {
+		return;
+	}
+
 	m_os.close();
 
 	// TODO: windows
@@ -49,6 +62,10 @@ void Log::backup() {
 }
 
 void Log::log(Level l, const string& category, const string& msg) {
+
+	if (m_maxSize < 1) {
+		return;
+	}
 
 	ostringstream os;
 	time_t t;

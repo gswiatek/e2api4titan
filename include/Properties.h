@@ -26,20 +26,47 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef _gs_e2_Version_h_
-#define _gs_e2_Version_h_
+#ifndef _gs_e2_Properties_h_
+#define _gs_e2_Properties_h_
 
 #include <string>
+#include <map>
+
 namespace gs {
 	namespace e2 {
-		class Version {
+		/**
+		 * Helper class for handling property files
+		 */
+		class Properties {
 		public:
-			static const int major = 1;
-			static const int minor = 1;
-			static const int build = 10;
+			Properties();
+			~Properties();
 
-			static std::string& getVersion();
+			/**
+			 * Reads a property file.
+			 *
+			 * @param fileName name of the property file 
+			 */
+			bool read(const std::string& fileName);
+
+			/**
+			 * Gets a property value for the given key.
+			 *
+			 * @param key the desired key
+			 * @return the found property value or empty string
+			 */
+			const std::string& get(const std::string& key) const;
+
+			/**
+			 * Gets a copy of all properties
+			 */
+			std::map<std::string, std::string> get();
+
+		private:
+			std::map<std::string, std::string> m_props;
 		};
 	}
 }
+
+
 #endif

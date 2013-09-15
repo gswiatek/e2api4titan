@@ -53,6 +53,7 @@ namespace gs {
 			static const bool& isAutoZap();
 			static const bool& isDefaultRecFileNameFormat();
 			static void setDefaultRecFileNameFormat(bool val);
+			static char fileSeparator;
 
 		private:
 			Config();
@@ -65,7 +66,7 @@ namespace gs {
 			static int m_titanPort; /**< Web server port on Titan receiver (default: 80) */
 			static int m_titanDataPort; /**< Data port on Titan receiver (default: 22222) */
 			static int m_dataPort; /**< Enigma2 data port (default: 8001) */
-			static std::string m_titanDir; /**< Directory where the bouquets and channels are stored (/var/etc/titan) */
+			static std::string m_titanDir; /**< Directory where the bouquets and channels are stored (/mnt/settings) */
 			static std::string m_etcDir; /**< etc directory with firmware information (/etc) */
 			static std::string m_logFile; /**< The file used for logging (default: /tmp/e2webserv.log */
 			static std::size_t m_maxLogFileSize; /**< Max log file size in KB (default: 10) */

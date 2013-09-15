@@ -5,6 +5,7 @@ CPP_SRC=src/Config.cpp\
 	src/Log.cpp\
 	src/Version.cpp\
 	src/Util.cpp\
+	src/Properties.cpp\
 	src/FileHelper.cpp\
 	src/Client.cpp\
 	src/TitanAdapter.cpp\
@@ -44,10 +45,3 @@ $(EXEC): $(OBJ)
 clean:
 	rm -rf $(OBJ) $(EXEC)
 
-tpk: $(EXEC)
-	cp $(EXEC) tpk-raw/flash/mnt/bin
-	cp $(EXEC) tpk-raw/swap/var/swap/bin
-	$(JAVA_HOME)/bin/java -jar java/tpk.jar tpk-raw/flash tpk/titan-plugin-network-e2webserv_1.1.9_sh4.tpk
-	$(JAVA_HOME)/bin/java -jar java/tpk.jar tpk-raw/swap tpk/titan-plugin-swapnetwork-e2webserv_1.1.9_sh4.tpk
-	gzip tpk/titan-plugin-network-e2webserv_1.1.9_sh4.tpk
-	gzip tpk/titan-plugin-swapnetwork-e2webserv_1.1.9_sh4.tpk

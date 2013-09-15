@@ -28,6 +28,7 @@
 
 #include "Config.h"
 #include "Util.h"
+#include "Properties.h"
 
 #include <cstring>
 #include <iostream>
@@ -45,11 +46,14 @@ int Config::m_titanDataPort = 22222;
 
 string Config::m_titanHost = "127.0.0.1";
 
+
 #ifdef _WIN32
+char Config::fileSeparator('\\');
 string Config::m_titanDir("c:\\users\\swiatek\\documents\\SatReceiver\\development\\titan\\");
 string Config::m_etcDir("c:\\users\\swiatek\\documents\\SatReceiver\\development\\etc\\");
 #else
-string Config::m_titanDir("/var/etc/titan/");
+char Config::fileSeparator('/');
+string Config::m_titanDir("/mnt/settings/");
 string Config::m_etcDir("/etc/");
 #endif
 
@@ -124,60 +128,87 @@ bool Config::parse(int argc, const char** argv) {
 	while (pos < argc) {
 		if (strcmp(argv[pos], "-b") == 0) {
 			m_daemon = true;
-		} else if (strcmp(argv[pos], "-a") == 0) {
-			m_autoZap = true;
-		} else if (strcmp(argv[pos], "-p") == 0) {
+		} else if (strcmp(argv[pos], "-c") == 0) {
 			if (pos + 1 == argc) {
 				usage(argv[0]);
 				return false;
 			}
 
-			m_port = Util::getInt(argv[++pos]);
-		} else if (strcmp(argv[pos], "-h") == 0) {
-			if (pos + 1 == argc) {
-				usage(argv[0]);
-				return false;
+			string fileName = argv[++pos];
+
+			Properties props;
+
+			if (props.read(fileName)) {
+				const string& port = props.get("port");
+
+				if (!port.empty()) {
+					m_port = Util::getInt(port);
+				}
+
+				const string& dataPort = props.get("dataPort");
+
+				if (!dataPort.empty()) {
+					m_dataPort = Util::getInt(dataPort);
+				}
+
+				const string& titanPort = props.get("titanPort");
+
+				if (!titanPort.empty()) {
+					m_titanPort = Util::getInt(titanPort);
+				}
+
+				const string& titanDataPort = props.get("titanDataPort");
+
+				if (!titanDataPort.empty()) {
+					m_titanDataPort = Util::getInt(titanDataPort);
+				}
+				
+				const string& titanHost = props.get("titanHost");
+
+				if (!titanHost.empty()) {
+					m_titanHost = titanHost;
+				}
+
+				const string& titanDir = props.get("titanDir");
+
+				if (!titanDir.empty()) {
+					m_titanDir = titanDir;
+
+					if (titanDir.at(titanDir.length() -1) != fileSeparator) {
+						m_titanDir.append(1, fileSeparator);
+					}
+				}
+
+				const string& autoZap = props.get("autoZap");
+
+				if (!autoZap.empty()) {
+					m_autoZap = ("true" == autoZap) || ("1" == autoZap);
+				}
+
+				const string& logFile = props.get("logFile");
+
+				if (!logFile.empty()) {
+					m_logFile = logFile;
+				}
+
+				const string& maxLogSize = props.get("maxLogSize");
+
+				if (!maxLogSize.empty()) {
+					m_maxLogFileSize = Util::getInt(maxLogSize);
+				}
+
+				const string& threadPool = props.get("threadPool");
+
+				if (!threadPool.empty()) {
+					int threads = Util::getInt(threadPool);
+
+					if (threads > 0 && threads <= 8) {
+						m_threads = threads;
+					}
+
+				}
 			}
-			m_titanHost = argv[++pos];
-		} else if (strcmp(argv[pos], "-d") == 0) {
-			if (pos + 1 == argc) {
-				usage(argv[0]);
-				return false;
-			}
-			m_titanDir = argv[++pos];
-#ifndef _WIN32
-			if (m_titanDir[m_titanDir.size() - 1] != '/') {
-				m_titanDir.append("/");
-			}
-#else
-			if (m_titanDir[m_titanDir.size() - 1] != '\\') {
-				m_titanDir.append("\\");
-			}
-#endif
-		} else if (strcmp(argv[pos], "-dp") == 0) {
-			if (pos + 1 == argc) {
-				usage(argv[0]);
-				return false;
-			}
-			m_dataPort = Util::getInt(argv[++pos]);
-		} else if (strcmp(argv[pos], "-tp") == 0) {
-			if (pos + 1 == argc) {
-				usage(argv[0]);
-				return false;
-			}
-			m_titanPort = Util::getInt(argv[++pos]);
-		} else if (strcmp(argv[pos], "-tdp") == 0) {
-			if (pos + 1 == argc) {
-				usage(argv[0]);
-				return false;
-			}
-			m_titanDataPort = Util::getInt(argv[++pos]);
-		} else if (strcmp(argv[pos], "-n") == 0) {
-			if (pos + 1 == argc) {
-				usage(argv[0]);
-				return false;
-			}
-			m_threads = Util::getInt(argv[++pos]);
+
 		} else {
 			usage(argv[0]);
 			return false;
@@ -193,12 +224,5 @@ void Config::usage(const char* progName) {
 	cerr << progName << "[<option>*]" << endl;
 	cerr << "Options: " << endl;
 	cerr << "\t-b           Start the program in background" << endl;
-	cerr << "\t-a           Enable auto zap" << endl;
-	cerr << "\t-p <num>     Web Server port (default: 8080)" << endl;
-	cerr << "\t-dp <num>    E2 specific data port (default: 8001)" << endl;
-	cerr << "\t-h <ip>      IP of Titan Receiver (default: 127.0.0.1)" << endl;
-	cerr << "\t-tp <num>    Titan Web Server port (default: 80)" << endl;
-	cerr << "\t-tdp <num>   Titan data port (default: 22222)" << endl;
-	cerr << "\t-d <dir>     Titan settings directory (default: /var/etc/titan/)" << endl;
-	cerr << "\t-n <num>     Number of threads in pool (default: 2)" << endl;
+	cerr << "\t-c <file>    Configuration file" << endl;
 }

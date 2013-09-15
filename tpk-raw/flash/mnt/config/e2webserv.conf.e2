@@ -1,0 +1,28 @@
+# e2 web port
+port=8080
+# e2 data port
+dataPort=8001
+# titan web port
+titanPort=80
+# titan data port
+titanDataPort=22222
+# titan host (change it if e2webserv is not running locally on the receiver)
+titanHost=127.0.0.1
+# automatic switching of channels
+# It is useful if you don't want manually switch a channel on receiver with a single tuner.
+# If it is set to false and you have a single tuner the you can stream only channels located 
+# on the same transponder as the current channel active on the receiver.
+autoZap=true
+# log output file
+logFile=/tmp/e2webserv.log
+# maximal log file size in KB. Set it to 0 (default 10KB) to disable logging (maximal allowed value is 1024).
+# When the file limit is reached a backup of the current file is created. 
+# It means maximally 2 x maxLogSize KB will be used.
+maxLogSize=10
+# thread pool size (1..8)
+threadPool=2
+# Directory were the transponder and bouquet files are located.
+# You don't need to specify it, it will be automatically discovered.
+# But if you you start e2webserv not on the receiver (but e.g. on your Linux server or Windows computer) then you
+# should copy the settings (channel, transponder, provider and all bouquets file) and specify here the location on the local computer.
+titanDir=/mnt/settings
