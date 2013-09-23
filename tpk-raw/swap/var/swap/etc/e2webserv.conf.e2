@@ -21,7 +21,7 @@ logFile=/tmp/e2webserv.log
 maxLogSize=10
 # thread pool size (1..8)
 threadPool=2
-# Directory were the transponder and bouquet files are located.
+# Directory where the transponder and bouquet files are located.
 # You don't need to specify it, it will be automatically discovered.
 # But if you you start e2webserv not on the receiver (but e.g. on your Linux server or Windows computer) then you
 # should copy the settings (channel, transponder, provider and all bouquets file) and specify here the location on the local computer.

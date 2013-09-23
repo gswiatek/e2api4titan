@@ -230,6 +230,23 @@ namespace gs {
 			TimerList m_timers;
 		};
 
+		/** Used to read events from EPG search */
+		class EpgSearchReader: public LineHandler {
+		public:
+			EpgSearchReader(ChannelReader& reader);
+			virtual ~EpgSearchReader();
+
+			virtual void handleLine(const std::vector<std::string>& line);
+			virtual void finished();
+
+			const EventList& getEvents() const;
+
+		private:
+			ChannelReader& m_channelReader;
+			Service m_lastService;
+			EventList m_events;
+		};
+
 		class TitanAdapter {
 		public:
 			TitanAdapter();
@@ -252,6 +269,7 @@ namespace gs {
 			EventList getEpgNowForBouquet(const std::string& bouquetName);
 			EventList getEpgNextForBouquet(const std::string& bouquetName);
 			EventList getEpgNext(const std::string& channelReference);
+			EventList searchEpg(const std::string& searchQuery);
 			bool setPowerState(PowerState state);
 			CurrentService getCurrent(bool withEpg = true);
 			MovieList getMovies();
@@ -267,6 +285,7 @@ namespace gs {
 			bool deleteTimer(const Timer& t);
 			bool getEpg(const std::string& ref, unsigned int id, Event& event);
 			Reference getCurrentReference();
+			bool sendMessage(const std::string& title, const std::string& msg, int timeout);
 
 		private:
 			bool getEpg(const std::string& ref, Event& event);

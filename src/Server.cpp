@@ -279,6 +279,12 @@ void handle(struct mg_connection* conn, std::string& uri, const string& query, c
 
 			os << xml << endl;
 			os << l;
+		} else if (uri == "epgsearch") {
+			string query = Util::getString(param, "search", "");
+			EventList l = TitanAdapter::getAdapter()->searchEpg(query);
+
+			os << xml << endl;
+			os << l;
 		} else if (uri == "timerlist") {
 			TimerList l = TitanAdapter::getAdapter()->getTimers();
 
@@ -395,6 +401,31 @@ void handle(struct mg_connection* conn, std::string& uri, const string& query, c
 
 			playList(os, services, host);
 			contentType = m3uContentType;
+		} else if (uri == "message") {
+			string title("Message");
+			string msg = Util::getString(param, "text", "");
+			int type = Util::getInt(param, "type", 2);
+
+
+			if (type == 1) {
+				title = "Info";
+			} else if (type == 3) {
+				title = "Attention";
+			}
+
+			int timeout = Util::getInt(param, "timeout", 0);
+
+			bool res = false;
+			if (type > 0 && type <=3) {
+				res = TitanAdapter::getAdapter()->sendMessage(title, msg, timeout);
+			}
+
+			os << xml << endl;
+			os << "<e2simplexmlresult>";
+			os << "<e2state>" << (res ? "True" : "False") << "</e2state>";
+			os << "<e2statetext>" << (res ? "Ok": "Not ok") << "</e2statetext>";
+			os << "</e2simplexmlresult>";
+
 		} else {
 			notFound = true;
 		}

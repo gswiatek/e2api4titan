@@ -33,3 +33,51 @@ Changes since 1.1.0
 - services.m3u implemented
 - auto zap (to allow it please add the option "-a" to the e2webserv)
 - improvement for serviceplayable (not yet tested)
+
+Version 1.1.2 (22.04.2013)
+-------------
+- Parsing of Titan lines fixed. EPG (if available) should be now displayed correctly.
+
+Version 1.1.3 (1.05.2013)
+-------------
+- Read titan.cfg to determine recorded file name format (channel-movie or movie-channel).
+- Support for radio bouquets (preparation)
+
+Version 1.1.4 (14.05.2013)
+-------------
+- Fix deletion of recorded movies (the referernce type was not initialized).
+- Fix data type used for titan specific TID.
+
+Version 1.1.5 (14.05.2013)
+-------------
+- Second fix for TID and NID references.
+
+Version 1.1.6 (18.05.2013)
+-------------
+- Workaround for VU+ XMP parser error (recording should be now displayed in XBMC)
+
+Version 1.1.7 (18.08.2013)
+-------------
+- Auto-detection for configuration files.
+- Radio bouquets support added.
+- Log output improvements (date and time instead of seconds since epoch)
+
+Version 1.1.8 (19.08.2013)
+-------------
+- Radio streaming fixed.
+- Radio/TV bouquet list fixed.
+
+Version 1.1.9 (08.09.2013)
+-------------
+- TPK support for installation (requires Titan 1.30 and above)
+- Small fixes for radio streaming
+
+
+Version 1.1.10 (15.09.2013)
+-------------
+- Configuration file introduced (program options changed)
+
+Version 1.1.11 (23.09.2013)
+-------------
+- EPG search
+- display message (Info, Message, Attention) on screen

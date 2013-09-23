@@ -386,6 +386,8 @@ namespace gs {
 			if (event.service.type != RT_INVALID) {
 				os << "<e2eventservicereference>" << event.service << "</e2eventservicereference>" << std::endl;
 				os << "<e2eventservicename>" << Util::getXml(event.servicveName) << "</e2eventservicename>" << std::endl;
+			} else if (!event.servicveName.empty()) {
+				os << "<e2eventservicename>" << Util::getXml(event.servicveName) << "</e2eventservicename>" << std::endl;
 			}
 
 			os << "</e2event>" << std::endl;

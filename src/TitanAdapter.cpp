@@ -344,6 +344,25 @@ EventList TitanAdapter::getEpg(const string& serviceRef) {
 	return res;
 }
 
+EventList TitanAdapter::searchEpg(const string& searchQuery) {
+	EventList res;
+
+	string reply;
+	string query = Util::urlEncode(searchQuery, true);
+
+	if (Client::get(Config::getTitanHost(), Config::getTitanPort(), "/queryraw?getepgsearch&" + query, reply)) {
+		EpgSearchReader reader(m_channelReader);
+
+		istringstream is(reply);
+
+		FileHelper::handleStream(is, reader);
+
+		res = reader.getEvents();
+	}
+
+	return res;
+}
+
 bool TitanAdapter::deleteMovie(const string& ref) {
 	string reply;
 
@@ -639,6 +658,53 @@ void EpgReader::handleLine(const vector<string>& line) {
 }
 
 void EpgReader::finished() {
+	Log::getLogger()->log(Log::DEBUG, "ADP", "events=" + Util::valueOf(m_events.size()));
+}
+
+EpgSearchReader::EpgSearchReader(ChannelReader& reader): LineHandler(5), m_channelReader(reader) {
+	m_lastService.bouquet = false;
+}
+
+EpgSearchReader::~EpgSearchReader() {
+
+}
+
+const EventList& EpgSearchReader::getEvents() const {
+	return m_events;
+}
+
+void EpgSearchReader::handleLine(const vector<string>& line) {
+	if (line.size() < 5) {
+		return;
+	}
+
+	if (line[0] == "BeginNewChannel") {
+		string sid = line[2];
+		string tid = line[3];
+		string ref = sid + "," + tid;
+
+		if (!m_channelReader.lookup(ref, m_lastService.name, m_lastService.ref)) {
+			m_lastService.name = line[1];
+			m_lastService.ref.type = RT_INVALID;
+		}
+
+	} else if (line.size() == 6) {
+		Event e;
+
+		e.title = line[0];
+		e.start = Util::getTime(line[1]);
+		e.dur = Util::getTime(line[2]) - e.start;
+		e.desc = line[3];
+		e.extended = line[4];
+		e.id = Util::getUInt(line[5]);
+		e.servicveName = m_lastService.name;
+		e.service = m_lastService.ref;
+
+		m_events.push_back(e);
+	}
+}
+
+void EpgSearchReader::finished() {
 	Log::getLogger()->log(Log::DEBUG, "ADP", "events=" + Util::valueOf(m_events.size()));
 }
 
@@ -1381,4 +1447,20 @@ bool TitanAdapter::deleteTimer(const Timer& timer) {
 	}
 
 	return deleted;
+}
+
+bool TitanAdapter::sendMessage(const string& title, const string& msg, int timeout) {
+	ostringstream os;
+
+	os << "/cgi-bin/xmessage?caption=" << Util::urlEncode(title, true) << "&body=" << Util::urlEncode(msg, true);
+
+	if (timeout > 0) {
+		os << "&timeout=" << timeout;
+	}
+
+	string reply;
+	bool res = Client::get(Config::getTitanHost(), Config::getTitanPort(), os.str(), reply);
+
+	return res;
+
 }

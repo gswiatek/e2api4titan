@@ -1,27 +1,27 @@
 Requirements:
 ------------
 - You need Sat receiver with the Titan software
-- Enough free space on drive (about 200KB are required)
+- Enough free space on drive (about 300KB are required)
 - Please ensure that port 8001 is not used (check /etc/inted.conf)
-- iOS device with Enigma2 app (e.g. dreaMote Lite)
+- iOS device with Enigma2 app (e.g. dreaMote, e2RemoteHD) or XBMC with VU+ add-on.
 - Titan Web Server must be enabled
 
-Steps:
-------
+Manual installation steps:
+--------------------------
 
 1. Copy the pre-compiled binary (SH4) to your receiver using FTP
 ftp <receiver.ip>
-cd /var/emu
+cd /mnt/bin
 bin
 put e2webserv
 2. Please login now on the receiver
 telnet <receiver.ip>
 3. Set executable flag for the program
-chmod +x /var/emu/e2webserv
+chmod +x /mnt/bin/e2webserv
 4. Prepare the program for auto-start
-vi /var/etc/autostart/usercmd.sh
+vi /mnt/config/usercmd.sh
 and add the line:
-/var/emu/e2webserv -b
+/mnt/bin/e2webserv -b
 
 When you restart the receiver the program will automatically start and run in background.
 If you don't want to restart the receiver now, please execute the command manually.
@@ -30,12 +30,16 @@ If you don't want to restart the receiver now, please execute the command manual
 http://<receiver.ip>:8080/web/about
 
 6. Configure your app to use the desired IP address and the port 8080 (you can change the port 
-  by providing the -p <your-desired-port> option for e2webserv.
+  by providing configuration file and running the program with -c option)
 
+TPK installation steps:
+-----------------------
+1. copy the desired tpk.gz file to /tmp directory on your receiver using FTP.
+2. Menu / Erweiterungen / TPK installieren aus /tmp (in case of Update please remove first the old TPK)
+ 
 Assumption:
 ----------
-- Titan web server is running on port 80 (start e2webserv with additional option -tp <port>, when this is not true)
-- Titan data port is 22222 (start e2webserv with additional option -tdp <port>, when this is not true)
+- Titan web server is running on port 80 (change it in e2webserv.conf if required)
+- Titan data port is 22222 (change it in e2webserv.conf if required)
 - Movies are in /media/hdd/movie
-- Bouquets and channel data are located in /var/etc/titan
 

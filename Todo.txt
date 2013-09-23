@@ -2,16 +2,12 @@ Here are my preferences for further development:
 ------------------------------------------------
 
 High:
-- Direct implementation for movie list to support EPG.
 - Bug fixes
 - Code improvements and checks (e.g. memory leaks)
 
 Medium:
-- IPK build
-
-Low:
-- Radio
-- Cross-compilation for Raspberry Pi 
+- Picons 
+- Direct implementation for movie list to support EPG.
 
 No priority:
 - Web Basic Authentication
