@@ -25,8 +25,8 @@ void Log::setLogger(Log* log) {
 Log::Log(const std::string& fileName, size_t maxSize): m_fileName(fileName), m_maxSize(maxSize), m_pos(0) {
 
 	if (m_maxSize > 0) {
-		if (m_maxSize > 1024) {
-			m_maxSize = 1024;
+		if (m_maxSize > (1024 * 1024)) {
+			m_maxSize = (1024 * 1024);
 		}
 
 		m_os.open(m_fileName.c_str(),  ios::out | ios::app);
