@@ -12,20 +12,7 @@ CPP_SRC=src/Config.cpp\
 	src/Server.cpp
 LIBS=
 
-#CC=gcc
-CC=/tdt/tdt/tufsbox/devkit/sh4/bin/sh4-linux-gcc
-
-#CXX=g++
-CXX=/tdt/tdt/tufsbox/devkit/sh4/bin/sh4-linux-g++
-
-#CROSS_CFLAGS=
-CROSS_CFLAGS=-I/tdt/tdt/tufsbox/devkit/sh4/include
-
-CFLAGS=-c -Wall -O2 -DNO_CGI -DNO_SSL -DNDEBUG -Iinclude $(CROSS_CFLAGS)
-
-CROSS_LDFLAGS=-L/tdt/tdt/tufsbox/devkit/sh4/lib
-#CROSS_LDFLAGS=
-
+CFLAGS=-static-libstdc++ -c -Wall -O2 -DNO_CGI -DNO_SSL -DNDEBUG -Iinclude $(CROSS_CFLAGS)
 LDFLAGS=$(CROSS_LDFLAGS) $(LIBS) -lpthread -ldl
 EXEC=e2webserv
 OBJ=$(CPP_SRC:.cpp=.o) $(C_SRC:.c=.o)
@@ -34,10 +21,11 @@ all: $(EXEC)
 
 $(EXEC): $(OBJ)
 	$(CXX) $(LDFLAGS) $(LIBS) $(OBJ) -o $@
-	cp $(EXEC) sh4/v1.1
+	$(STRIP) $(EXEC)
+	cp $(EXEC) $(ARCH)
 
 .cpp.o:
-	$(CXX) $(CFLAGS) $< -o $@
+	$(CXX) $(CFLAGS) -std=c++0x $< -o $@
 
 .c.o:
 	$(CC) $(CFLAGS) $< -o $@

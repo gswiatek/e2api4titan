@@ -1,4 +1,4 @@
-// Copyright (c) 2013, Grzegorz Swiatek. All rights reserved.
+// Copyright (c) 2013-2014, Grzegorz Swiatek. All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
@@ -258,6 +258,7 @@ namespace gs {
 
 			void init();
 			bool isRunning();
+			bool isInStandby();
 			const ServiceList& getServices() const;
 			const ServiceList& getServices(const std::string& reference) const;
 			void about(DeviceInfo& device, Channel& currentService);

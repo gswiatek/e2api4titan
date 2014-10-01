@@ -1,4 +1,4 @@
-// Copyright (c) 2013, Grzegorz Swiatek. All rights reserved.
+// Copyright (c) 2013-2014, Grzegorz Swiatek. All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
@@ -68,7 +68,10 @@ string Util::getXml(const string& data) {
 string Util::getTitanRef(const string& e2Ref) {
 	if (e2Ref.find("1:7:1:") == 0 || e2Ref.find("1:7:2:") == 0) { // TV or radio bouquet
 		static string fromBouquet("FROM BOUQUET \"");
+		static string fromBouquet2("FROM+BOUQUET+\""); // TVBrowser specific
 		static string orderBy("\" ORDER BY");
+		static string orderBy2("\"+ORDER+BY"); // TVBrowser specific
+
 		string::size_type pos = e2Ref.find(fromBouquet);
 
 		if (pos != string::npos) {
@@ -79,11 +82,23 @@ string Util::getTitanRef(const string& e2Ref) {
 			if (pos != string::npos) {
 				return res.substr(0, pos);
 			}
-		} else {
-			pos = e2Ref.rfind(':');
+		} else { // check for TVBrowser specific URIs
+			pos = e2Ref.find(fromBouquet2);
 
 			if (pos != string::npos) {
-				return e2Ref.substr(pos + 1);
+				string res = e2Ref.substr(pos + fromBouquet2.size());
+
+				pos = res.find(orderBy2);
+
+				if (pos != string::npos) {
+					return res.substr(0, pos);
+				}
+			} else {
+				pos = e2Ref.rfind(':');
+
+				if (pos != string::npos) {
+					return e2Ref.substr(pos + 1);
+				}
 			}
 		}
 	} else if (e2Ref.find("1:0:0:0:0:0:0:0:0:0:") == 0) { // movies

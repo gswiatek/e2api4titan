@@ -81,3 +81,10 @@ Version 1.1.11 (23.09.2013)
 -------------
 - EPG search
 - display message (Info, Message, Attention) on screen
+
+Version 1.1.13 (28.09.2014)
+-------------
+- Fix for standby status in /web/powerstate request (FHEM should work now)
+- Dummy implementation for /ipkg request (required for TVBrowser support)
+- New requests /web/currenttime, /web/stream.m3u and /web/streamcurrent.m3u implemented
+- Workaround for wrong URL encoding in TVBrowser capture plug-in

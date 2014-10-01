@@ -1,4 +1,4 @@
-// Copyright (c) 2013, Grzegorz Swiatek. All rights reserved.
+// Copyright (c) 2013-2014, Grzegorz Swiatek. All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
@@ -42,6 +42,8 @@
 
 #ifndef _WIN32
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 #endif
 
 #include <cerrno>
@@ -69,18 +71,10 @@ string getTitanRef(const Reference& ref) {
 	return os.str();
 }
 
-string movedTemporarily(struct mg_connection* conn, ostringstream& response) {
-	string server;
-
+string getHost(struct mg_connection* conn) {
 	const char* host = mg_get_header(conn, "Host");
 
-	if (host) {
-		response << "HTTP/1.1 302 Moved Temporarily\r\n";
-	} else {
-		response << "HTTP/1.1 400 Bad Request\r\n";
-	}
-
-	response << "Date: " << Util::getHttpDate() << "\r\n";
+	string server;
 
 	if (host) {
 		const string& titanHost = Config::getTitanHost();
@@ -97,6 +91,22 @@ string movedTemporarily(struct mg_connection* conn, ostringstream& response) {
 			}
 		}
 	}
+
+	return server;
+}
+
+string movedTemporarily(struct mg_connection* conn, ostringstream& response) {
+	string server = getHost(conn);
+
+	const char* host = mg_get_header(conn, "Host");
+
+	if (host) {
+		response << "HTTP/1.1 302 Moved Temporarily\r\n";
+	} else {
+		response << "HTTP/1.1 400 Bad Request\r\n";
+	}
+
+	response << "Date: " << Util::getHttpDate() << "\r\n";
 
 	return server;
 }
@@ -187,6 +197,7 @@ void handle(struct mg_connection* conn, std::string& uri, const string& query, c
 	static const string xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
 	static const string nl = "\r\n";
 	static const string defaultContentType = "Content-Type: application/xhtml+xml; charset=UTF-8\r\n";
+	static const string textType = "Content-Type: text/plain; charset=UTF-8\r\n";
 	static const string m3uContentType = "Content-Type: application/vnd.apple.mpegurl\r\nContent-Disposition: attachmant; filename=playlist.m3u8\r\n";
 
 	string contentType = defaultContentType;
@@ -235,7 +246,7 @@ void handle(struct mg_connection* conn, std::string& uri, const string& query, c
 
 				os << xml << endl;
 				os << l;
-			} else if (query.find("sRef=") == 0) {
+			} else if (query.find("sRef=") == 0 || query.find("bRef=") == 0) {
 				string serviceRef = Util::getTitanRef(query.substr(5));
 				const ServiceList& l = TitanAdapter::getAdapter()->getServices(serviceRef);
 
@@ -309,28 +320,16 @@ void handle(struct mg_connection* conn, std::string& uri, const string& query, c
 			os << "<e2statetext>" << (res ? "Ok": "Not ok") << "</e2statetext>";
 			os << "</e2simplexmlresult>";
 
-		} else if (uri == "powerstate" && query.empty()) {	
-			// TODO: response
-			os << xml << endl;
-			os << "<e2powerstate><e2instandby>";
-		
-			if (TitanAdapter::getAdapter()->isRunning()) {
-				os << "true";
-			} else {
-				os << "false";
+		} else if (uri == "powerstate") {
+			if (query.find("newstate=") == 0) {
+				int state = Util::getInt(query.substr(9).c_str());
+				TitanAdapter::getAdapter()->setPowerState((PowerState) state);
 			}
 
-			os << "</e2instandby></e2powerstate>" << endl;
-		} else if (uri == "powerstate" && query.find("newstate=") == 0) {
-			int state = Util::getInt(query.substr(9).c_str());
-
-			TitanAdapter::getAdapter()->setPowerState((PowerState) state);
-
-			// TODO: response
 			os << xml << endl;
 			os << "<e2powerstate><e2instandby>";
 		
-			if (state == PS_STANDBY || state == PS_DEEP_STANDBY) {
+			if (TitanAdapter::getAdapter()->isInStandby()) {
 				os << "true";
 			} else {
 				os << "false";
@@ -393,6 +392,35 @@ void handle(struct mg_connection* conn, std::string& uri, const string& query, c
 
 			os << xml << endl;
 			os << device;
+		} else if (uri == "stream.m3u") {
+			string ref = Util::getString(param, "ref", "");
+			string titanRef = Util::getTitanRef(Util::getString(param, "ref", ""));
+
+			Reference e2Ref = getRef(ref);
+			checkAutoZap(e2Ref); // we check here if we should automatically zap to the new channel
+
+			string server = getHost(conn);
+
+			os << "#EXTM3U" << endl;
+			os << "#EXTVLCOPT--http-reconnect=true" << endl;
+
+
+			os << "http://" << server << ":" << Config::getTitanDataPort() << "/" << titanRef << endl;
+
+			contentType = m3uContentType;
+		} else if (uri == "streamcurrent.m3u") {
+			CurrentService cs = TitanAdapter::getAdapter()->getCurrent();
+
+			string server = getHost(conn);
+
+			os << "#EXTM3U" << endl;
+			os << "#EXTVLCOPT--http-reconnect=true" << endl;
+			os << "#EXTINF:-1," << cs.service.name.c_str() << endl;
+
+			unsigned long long tid = ((unsigned long long) cs.service.ref.nid << 16) + cs.service.ref.tid;
+			os << "http://" << server << ":" << Config::getTitanDataPort() << "/" << cs.service.ref.sid << ',' << tid << endl;
+
+			contentType = m3uContentType;
 		} else if (uri == "services.m3u") {
 			string ref = Util::getTitanRef(Util::getString(param, "bRef", ""));
 			ServiceList services = TitanAdapter::getAdapter()->getServices(ref);
@@ -425,10 +453,17 @@ void handle(struct mg_connection* conn, std::string& uri, const string& query, c
 			os << "<e2state>" << (res ? "True" : "False") << "</e2state>";
 			os << "<e2statetext>" << (res ? "Ok": "Not ok") << "</e2statetext>";
 			os << "</e2simplexmlresult>";
-
+		} else if (uri == "currenttime") {
+			os << xml << endl;
+			os << "<e2currenttime>";
+			os <<  time(0);
+			os << "</e2currenttime>";
 		} else {
 			notFound = true;
 		}
+	} else if (uri == "/ipkg") { // fake for TVBrowser
+		contentType = textType;
+		os << "Package: enigma2-plugin-extensions-webinterface Version: 2014-09-28" << endl;
 	} else if ((uri == "/file" || uri == "/file/") && query.find("file=") == 0) {
 		string ref = Util::getTitanRef(query.substr(5));
 		ref = Util::urlEncode(ref);

@@ -1,4 +1,4 @@
-// Copyright (c) 2013, Grzegorz Swiatek. All rights reserved.
+// Copyright (c) 2013-2014, Grzegorz Swiatek. All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
@@ -440,6 +440,17 @@ bool TitanAdapter::isRunning() {
 	return res;
 }
 
+bool TitanAdapter::isInStandby() {
+	bool res = false;
+	string reply;
+
+	if (Client::get(Config::getTitanHost(), Config::getTitanPort(), "/queryraw?boxstatus", reply)) {
+		res = (reply == "standby") ;
+	}
+
+	return res;
+}
+
 bool TitanAdapter::sendRc(int code) {
 	string rc = getRcName(code);
 
@@ -475,6 +486,12 @@ bool TitanAdapter::setPowerState(PowerState state) {
 		}
 	} else if (state == PS_WAKEUP) {
 		res = Client::get(Config::getTitanHost(), Config::getTitanPort(), "/queryraw?sendrc&rcpower", reply);
+	}
+
+	if (Client::get(Config::getTitanHost(), Config::getTitanPort(), "/queryraw?boxstatus", reply)) {
+		if (reply == "standby") {
+			res = true;
+		}
 	}
 
 	return res;
