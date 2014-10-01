@@ -1,0 +1,8 @@
+ARCH=mips
+CC=/opt/cross/mipsel-tuxbox-linux-gnu/bin/mipsel-tuxbox-linux-gnu-gcc
+CXX=/opt/cross/mipsel-tuxbox-linux-gnu/bin/mipsel-tuxbox-linux-gnu-g++
+STRIP=/opt/cross/mipsel-tuxbox-linux-gnu/mipsel-tuxbox-linux-gnu/bin/strip
+CROSS_CFLAGS=
+CROSS_LDFLAGS=
+
+include Makefile
