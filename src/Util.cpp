@@ -274,6 +274,8 @@ int Util::urlDecode(const char *src, int src_len, char *dst,
       b = tolower(* (const unsigned char *) (src + i + 2));
       dst[j] = (char) ((HEXTOI(a) << 4) | HEXTOI(b));
       i += 2;
+	} else if (src[i] == '+') {
+		dst[j] = ' ';
     } else {
       dst[j] = src[i];
     }
