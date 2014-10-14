@@ -3,6 +3,6 @@ CC=/tdt/tdt/tufsbox/devkit/sh4/bin/sh4-linux-gcc
 CXX=/tdt/tdt/tufsbox/devkit/sh4/bin/sh4-linux-g++
 STRIP=/tdt/tdt/tufsbox/devkit/sh4/bin/strip
 CROSS_CFLAGS=-I/tdt/tdt/tufsbox/devkit/sh4/include
-CROSS_LDFLAGS=-L/tdt/tdt/tufsbox/devkit/sh4/lib
+CROSS_LDFLAGS=-L/tdt/tdt/tufsbox/devkit/sh4/lib -static-libstdc++
 
 include Makefile

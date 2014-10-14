@@ -12,7 +12,7 @@ CPP_SRC=src/Config.cpp\
 	src/Server.cpp
 LIBS=
 
-CFLAGS=-static-libstdc++ -c -Wall -O2 -DNO_CGI -DNO_SSL -DNDEBUG -Iinclude $(CROSS_CFLAGS)
+CFLAGS=-c -Wall -O2 -DNO_CGI -DNO_SSL -DNDEBUG -Iinclude $(CROSS_CFLAGS)
 LDFLAGS=$(CROSS_LDFLAGS) $(LIBS) -lpthread -ldl
 EXEC=e2webserv
 OBJ=$(CPP_SRC:.cpp=.o) $(C_SRC:.c=.o)
