@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2014, Grzegorz Swiatek. All rights reserved.
+// Copyright (c) 2013-2015, Grzegorz Swiatek. All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
@@ -395,30 +395,32 @@ MovieList TitanAdapter::getMovies() {
 		m.ref.path = name;
 
 		if (Config::isDefaultRecFileNameFormat()) { // channel-movie-timestamp
-			string::size_type pos = name.find('-');
+			string::size_type pos = name.find(") ");
 
 			if (pos != string::npos) {
-				m.serviceName = name.substr(0, pos);
+				m.serviceName = name.substr(1, pos - 1);
 
-				string::size_type pos2 = name.rfind('-');
+				string::size_type pos2 = name.rfind(" (");
 
-				if (pos2 > pos + 1) {
-					m.title = name.substr(pos + 1, pos2 - pos - 1);
+				if (pos2 > pos + 2) {
+					m.title = name.substr(pos + 2, pos2 - pos - 2);
 
-					m.recTime = Util::parseTime(name.substr(pos2 + 1));
+					m.recTime = Util::parseTime(name.substr(pos2 + 2, name.length() - pos2 - 3));
 				}
 			}
 		} else { // movie-channel-timestamp
-			string::size_type pos = name.rfind('-');
+			string::size_type pos = name.find(" (");
 
 			if (pos != string::npos) {
-				string::size_type pos2 = name.rfind('-', pos - 1);
+				m.title = name.substr(0, pos);
+
+				string::size_type pos2 = name.find(" (", pos + 2);
+				
 
 				if (pos2 != string::npos) {
-					m.title = name.substr(0, pos2);
-					m.serviceName = name.substr(pos2 + 1, pos - pos2 - 1);
+					m.serviceName = name.substr(pos + 2, pos2 - pos - 2);
 
-					m.recTime = Util::parseTime(name.substr(pos + 1));
+					m.recTime = Util::parseTime(name.substr(pos2 + 2, name.length() - pos2 - 3));
 				}
 			}
 		}

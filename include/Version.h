@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2014, Grzegorz Swiatek. All rights reserved.
+// Copyright (c) 2013-2015, Grzegorz Swiatek. All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
@@ -36,7 +36,7 @@ namespace gs {
 		public:
 			static const int major = 1;
 			static const int minor = 1;
-			static const int build = 14;
+			static const int build = 15;
 
 			static std::string& getVersion();
 		};
